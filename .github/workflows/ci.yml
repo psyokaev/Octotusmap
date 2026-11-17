@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env: { POSTGRES_PASSWORD: ci-password }
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-retries 30
+    env:
+      PYTHONUTF8: "1"
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PASSWORD: ci-password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11", cache: pip, cache-dependency-path: backend/requirements.txt }
+      - run: pip install --extra-index-url https://download.pytorch.org/whl/cpu -r backend/requirements.txt
+      - name: pytest backend
+        working-directory: backend
+        run: |
+          set -o pipefail
+          python -m pytest -q -p no:cacheprovider 2>&1 | tee pytest.log
+      - name: pytest streamlit
+        run: |
+          set -o pipefail
+          python -m pytest -q -p no:cacheprovider streamlit_app/tests 2>&1 | tee backend/pytest.log
+      - name: Ghi lỗi pytest thành annotation (đọc được không cần quyền tải log)
+        if: failure()
+        shell: python
+        run: |
+          t = open("backend/pytest.log", encoding="utf-8", errors="replace").read()[-6000:]
+          print("::error title=pytest::" + t.replace("%", "%25").replace(chr(13), "").replace(chr(10), "%0A"))
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tạo .env cho compose
+        run: |
+          cp .env.example .env
+          sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=ci-password/" .env
+          sed -i "s/^JWT_SECRET=.*/JWT_SECRET=$(openssl rand -hex 32)/" .env
+          echo "BOOTSTRAP_ARGS=--forecast-epochs 1" >> .env
+      - run: docker compose build
+      - run: docker compose up -d
+      - name: Chờ backend healthy (bootstrap huấn luyện lần đầu)
+        run: |
+          for i in $(seq 1 300); do
+            c=$(docker compose ps -aq backend)
+            s=$(docker inspect -f '{{.State.Health.Status}}' $c); st=$(docker inspect -f '{{.State.Status}}' $c)
+            echo "$i $st $s"; [ "$s" = healthy ] && break
+            [ "$st" != running ] && break  # backend lỗi/khởi động lại: dừng chờ để xem log
+            sleep 10
+          done
+          [ "$s" = healthy ]
+      - run: curl -sf http://127.0.0.1:8000/health
+      - run: curl -sf http://127.0.0.1:8501/_stcore/health
+      - name: Ghi log backend thành annotation khi lỗi
+        if: failure()
+        run: |
+          docker compose ps -a
+          docker compose logs --no-color --tail 200 > compose.log 2>&1 || true
+          python3 -c 'import pathlib;t=pathlib.Path("compose.log").read_text(errors="replace")[-6000:];print("::error title=compose::"+t.replace("%","%25").replace(chr(13),"").replace(chr(10),"%0A"))'

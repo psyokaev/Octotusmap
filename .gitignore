@@ -1,0 +1,55 @@
+# secrets
+.env
+backend/.env
+*.local.json
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# node
+node_modules/
+frontend/dist/
+playwright-report/
+test-results/
+.playwright-cli/
+
+# runtime data
+backend/storage/
+backend/runs/
+datasets/vision/synthetic/
+datasets/gis/vnm_adm2_simplified.geojson
+*.log
+graphify-out/cache/
+
+# model artifacts (sinh lại bằng scripts/bootstrap.py)
+backend/app/ai/artifacts/
+backend/yolov8n-seg.pt
+*.pt
+graphify-out/*
+!graphify-out/GRAPH_REPORT.md
+.playwright-cli/
+datasets/gis/gadm*
+
+# notebook: ảnh thô và ảnh sinh ra
+datasets/vision/flood_area_real/raw/
+datasets/vision/flood_area_real/images/
+datasets/vision/flood_area_real/labels/
+
+# Ghi chú AI, prompt, đề cương: không đưa lên GitHub
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+promt.txt
+prompt*.txt
+docs/de-cuong.txt
+*.docx
+~$*
+graphify-out/
+.claude/
+.superpowers/
+.playwright-cli/

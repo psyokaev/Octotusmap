@@ -1,0 +1,7 @@
+# Kaggle Flood Area Segmentation (faizalkarim, CC0) - ảnh THẬT, mask -> polygon
+path: E:/Octotusmap/datasets/vision/flood_area_real
+train: images/train
+val: images/val
+test: images/test
+names:
+  0: flood_water

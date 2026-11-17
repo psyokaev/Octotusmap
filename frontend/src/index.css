@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --surface: #ffffff;
+  --surface-2: #f5f8fa;
+  --line: #dbe3e9;
+  --text: #1b2b36;
+  --muted: #5b6b77;
+  color-scheme: light;
+}
+.dark {
+  --surface: #13212c;
+  --surface-2: #0c1720;
+  --line: #24384a;
+  --text: #e3ecf2;
+  --muted: #94a6b4;
+  color-scheme: dark;
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: 'Google Sans', Roboto, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.num { font-variant-numeric: tabular-nums; }
+
+@layer components {
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+  .muted { color: var(--muted); }
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors
+      disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary { @apply btn bg-water text-white hover:bg-[#166a9b]; }
+  .btn-ghost { @apply btn hover:bg-black/5 dark:hover:bg-white/10; border: 1px solid var(--line); }
+  .btn-danger { @apply btn bg-risk-high text-white hover:bg-[#a52121]; }
+  .input {
+    @apply w-full rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-water;
+    background: var(--surface); border: 1px solid var(--line); color: var(--text);
+  }
+  .label { @apply mb-1 block text-sm font-medium; }
+  .field-error { @apply mt-1 text-xs text-risk-high; }
+  .table { @apply w-full text-sm; }
+  .table th { @apply px-3 py-2 text-left font-semibold; border-bottom: 1px solid var(--line); background: var(--surface-2); }
+  .table td { @apply px-3 py-2 align-top; border-bottom: 1px solid var(--line); }
+  .chip { @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium; }
+}
+
+:focus-visible { outline: 2px solid #1c7cb5; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+.maplibregl-popup-content { border-radius: 10px !important; padding: 10px 12px !important; color: #1b2b36; }
+.maplibregl-ctrl-group { border-radius: 10px !important; }

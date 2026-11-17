@@ -1,0 +1,3609 @@
+{
+  "info": {
+    "name": "OctotusMap API",
+    "description": "Sinh từ OpenAPI bởi scripts/export_postman.py. Đặt username/password trong môi trường rồi chạy 'POST /api/v1/auth/login' để lấy token.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "username",
+      "value": ""
+    },
+    {
+      "key": "password",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Administration",
+      "item": [
+        {
+          "name": "GET /api/v1/admin/users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "role",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Users"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/admin/users",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Create User",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"\",\n  \"email\": \"\",\n  \"full_name\": \"\",\n  \"password\": \"{{password}}\",\n  \"roles\": [\n    \"USER\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/v1/admin/users/{uid}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users/:uid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users",
+                ":uid"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "uid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Update User",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"\",\n  \"full_name\": \"\",\n  \"is_active\": false,\n  \"roles\": [\n    \"ADMIN\"\n  ],\n  \"new_password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/v1/admin/users/{uid}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users/:uid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users",
+                ":uid"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "uid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Delete User"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/admin/settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "settings"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Settings"
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /api/v1/admin/settings/{key}",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/settings/:key",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "settings",
+                ":key"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "key",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Put Setting",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"value\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/admin/data-sources",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/data-sources",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "data-sources"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Data Sources"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/admin/rules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/rules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "rules"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Rules"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/admin/rules",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/rules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "rules"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Create Rule",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"config\": {},\n  \"notes\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/admin/rules/{rid}/activate",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/rules/:rid/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "rules",
+                ":rid",
+                "activate"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "rid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Activate Rule"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/admin/models",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/models",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "models"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Models"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/admin/training-runs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/training-runs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "training-runs"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Training Runs"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/admin/models/{mid}/activate",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/models/:mid/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "models",
+                ":mid",
+                "activate"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "mid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Activate Model"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/admin/models/train",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/models/train",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "models",
+                "train"
+              ],
+              "query": [
+                {
+                  "key": "task",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "epochs",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Huấn luyện chạy nền; theo dõi qua /admin/training-runs."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/admin/simulations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/simulations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "simulations"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Simulations"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/admin/simulations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/simulations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "simulations"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Create Simulation",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"radius_m\": 0,\n  \"depth_cm\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/v1/admin/simulations",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/simulations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "simulations"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Clear Simulations"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/v1/admin/simulations/{sid}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/simulations/:sid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "simulations",
+                ":sid"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "sid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Delete Simulation"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/admin/audit-logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/audit-logs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "audit-logs"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "action",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Audit Logs"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/admin/jobs/run-cycle",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/jobs/run-cycle",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "jobs",
+                "run-cycle"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Run Cycle"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Alerts",
+      "item": [
+        {
+          "name": "GET /api/v1/alerts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "level",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "area_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "direction",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Người dùng công khai chỉ thấy cảnh báo công khai đang hoạt động."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/alerts/assignees",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/assignees",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts",
+                "assignees"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Assignees"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/alerts/{aid}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/:aid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts",
+                ":aid"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "aid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Detail"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/alerts/{aid}/acknowledge",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/:aid/acknowledge",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts",
+                ":aid",
+                "acknowledge"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "aid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Acknowledge"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/alerts/{aid}/status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/:aid/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts",
+                ":aid",
+                "status"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "aid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Set Status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"NEW\",\n  \"note\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/alerts/{aid}/assign",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/:aid/assign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts",
+                ":aid",
+                "assign"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "aid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Assign",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 0,\n  \"note\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/alerts/{aid}/notes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/:aid/notes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts",
+                ":aid",
+                "notes"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "aid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Note",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/alerts/{aid}/verify",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/:aid/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts",
+                ":aid",
+                "verify"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "aid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Verify",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"outcome\": \"CONFIRMED\",\n  \"note\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /api/v1/auth/login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.test('Đăng nhập thành công', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('token', j.access_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/v1/auth/logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Logout"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/auth/session",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/session",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "session"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Phiên hiện tại hoặc null (khách) — tránh lỗi 401 khi trang công khai kiểm tra đăng nhập."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/auth/me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Me"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/auth/register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"\",\n  \"email\": \"\",\n  \"full_name\": \"\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/auth/change-password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "change-password"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Change Password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"{{password}}\",\n  \"new_password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cameras",
+      "item": [
+        {
+          "name": "GET /api/v1/cameras",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cameras",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cameras"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "List Cameras"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/cameras",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cameras",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cameras"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Create Camera",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"\",\n  \"name\": \"\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"stream_url\": \"\",\n  \"status\": \"ACTIVE\",\n  \"is_public\": false,\n  \"retention_days\": 30,\n  \"roi\": [\n    [\n      0\n    ]\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/cameras/analyze",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cameras/analyze",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cameras",
+                "analyze"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Phân tích ảnh tải lên (YOLOv8-seg nếu có trọng số, ngược lại HEURISTIC)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/cameras/media/{frame_id}/{kind}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cameras/media/:frame_id/:kind",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cameras",
+                "media",
+                ":frame_id",
+                ":kind"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "frame_id",
+                  "value": ""
+                },
+                {
+                  "key": "kind",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Ảnh camera chỉ phục vụ qua API có kiểm tra quyền (không mở thư mục tĩnh)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/cameras/{cid}/snapshot",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cameras/:cid/snapshot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cameras",
+                ":cid",
+                "snapshot"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "cid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Ảnh mới nhất của camera giao thông công khai (proxy, không lưu)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/cameras/{cid}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cameras/:cid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cameras",
+                ":cid"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "cid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Get Camera"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/v1/cameras/{cid}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cameras/:cid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cameras",
+                ":cid"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "cid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Update Camera",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"stream_url\": \"\",\n  \"status\": \"ACTIVE\",\n  \"is_public\": false,\n  \"retention_days\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/v1/cameras/{cid}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cameras/:cid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cameras",
+                ":cid"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "cid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Delete Camera"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/cameras/{cid}/detections",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cameras/:cid/detections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cameras",
+                ":cid",
+                "detections"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "cid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Detections"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Exports",
+      "item": [
+        {
+          "name": "GET /api/v1/exports/excel",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/exports/excel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "exports",
+                "excel"
+              ],
+              "query": [
+                {
+                  "key": "report",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "area_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "station_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "risk_level",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "data_type",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Excel"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/exports/csv",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/exports/csv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "exports",
+                "csv"
+              ],
+              "query": [
+                {
+                  "key": "kind",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "area_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "station_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "risk_level",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "data_type",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Csv Export"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/exports/history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/exports/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "exports",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "History"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Flood history",
+      "item": [
+        {
+          "name": "GET /api/v1/history/events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/history/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "history",
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "area_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "min_depth",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "direction",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Events"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/history/events",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/history/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "history",
+                "events"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Create Event",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location_name\": \"\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"started_at\": \"\",\n  \"ended_at\": \"\",\n  \"max_depth_cm\": 0,\n  \"cause\": \"RAIN\",\n  \"description\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/v1/history/events/{eid}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/history/events/:eid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "history",
+                "events",
+                ":eid"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "eid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Delete Event"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Flood reports & hotspots",
+      "item": [
+        {
+          "name": "GET /api/v1/reports/active",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports/active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "active"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Active Reports"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/reports",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Create Report",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"severity\": \"ANKLE\",\n  \"note\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/reports/{rid}/confirm",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports/:rid/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                ":rid",
+                "confirm"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "rid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Confirm Report"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/reports/{rid}/reject",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports/:rid/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                ":rid",
+                "reject"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "rid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Reject Report"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/gis/hotspots",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/gis/hotspots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gis",
+                "hotspots"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Điểm có nguy cơ ngập thường xuyên đã công bố (toạ độ geocode gần đúng)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Forecasts",
+      "item": [
+        {
+          "name": "GET /api/v1/forecasts/latest",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/forecasts/latest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "forecasts",
+                "latest"
+              ],
+              "query": [
+                {
+                  "key": "area_id",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Latest"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/forecasts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/forecasts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "forecasts"
+              ],
+              "query": [
+                {
+                  "key": "station_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Các lần phát hành gần nhất của một trạm."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/forecasts/risk",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/forecasts/risk",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "forecasts",
+                "risk"
+              ],
+              "query": [
+                {
+                  "key": "horizon",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "level",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Risk"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/forecasts/area/{aid}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/forecasts/area/:aid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "forecasts",
+                "area",
+                ":aid"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "aid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Area Forecast"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/forecasts/model-status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/forecasts/model-status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "forecasts",
+                "model-status"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Model Status"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "GIS",
+      "item": [
+        {
+          "name": "GET /api/v1/gis/areas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/gis/areas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gis",
+                "areas"
+              ],
+              "query": [
+                {
+                  "key": "level",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "parent_id",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Areas"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/gis/geojson",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/gis/geojson",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gis",
+                "geojson"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Ranh giới hành chính (GeoJSON, lon/lat, WGS84)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/gis/risk-layers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/gis/risk-layers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gis",
+                "risk-layers"
+              ],
+              "query": [
+                {
+                  "key": "horizon",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Risk Layers"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/gis/features",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/gis/features",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gis",
+                "features"
+              ],
+              "query": [
+                {
+                  "key": "horizon",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Lớp điểm: trạm (mưa/mực nước), camera, điểm ngập lịch sử, cảnh báo đang hoạt động."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/gis/identify",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/gis/identify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gis",
+                "identify"
+              ],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "lon",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Thông tin tại điểm click: khu vực, trạm gần nhất, rủi ro 0–6h, lịch sử ngập, camera."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/gis/areas/{aid}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/gis/areas/:aid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gis",
+                "areas",
+                ":aid"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "aid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Area Detail"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/gis/traffic-cameras",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/gis/traffic-cameras",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gis",
+                "traffic-cameras"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Traffic Cameras"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/gis/import",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/gis/import",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gis",
+                "import"
+              ],
+              "query": [
+                {
+                  "key": "level",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "name_field",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "code_field",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "source_name",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Import Boundaries"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Search & realtime",
+      "item": [
+        {
+          "name": "GET /api/v1/search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "geocode",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Search"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/routing/route",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/routing/route",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "routing",
+                "route"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Route",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"start\": [\n    null\n  ],\n  \"end\": [\n    null\n  ],\n  \"horizon_h\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "unread_only",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Notifications"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/notifications/{nid}/read",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/:nid/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                ":nid",
+                "read"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "nid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Read"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/notifications/read-all",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "read-all"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Read All"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "events"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Server-Sent Events: 'alert' (cảnh báo mới/thay đổi), 'cycle' (dữ liệu dự báo mới)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Stations",
+      "item": [
+        {
+          "name": "GET /api/v1/stations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "stations"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "station_type",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "area_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "connection",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "direction",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "List Stations"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/stations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "stations"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Create Station",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"\",\n  \"name\": \"\",\n  \"station_type\": \"RAIN\",\n  \"address\": \"\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"managing_unit\": \"\",\n  \"status\": \"ACTIVE\",\n  \"interval_minutes\": 60,\n  \"flood_threshold_cm\": 60,\n  \"notes\": \"\",\n  \"source_code\": \"MANUAL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/stations/import",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stations/import",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "stations",
+                "import"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "CSV/XLSX với cột station_code, observed_at, rainfall_mm, water_level_cm|water_level_m."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/stations/{sid}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stations/:sid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "stations",
+                ":sid"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "sid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Get Station"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/v1/stations/{sid}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stations/:sid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "stations",
+                ":sid"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "sid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Update Station",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"station_type\": \"RAIN\",\n  \"address\": \"\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"managing_unit\": \"\",\n  \"status\": \"ACTIVE\",\n  \"interval_minutes\": 0,\n  \"flood_threshold_cm\": 0,\n  \"notes\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/v1/stations/{sid}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stations/:sid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "stations",
+                ":sid"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "sid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Delete Station"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/stations/{sid}/observations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stations/:sid/observations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "stations",
+                ":sid",
+                "observations"
+              ],
+              "query": [
+                {
+                  "key": "date_from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "sid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Observations"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/stations/{sid}/observations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stations/:sid/observations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "stations",
+                ":sid",
+                "observations"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "sid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Add Observation",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observed_at\": \"\",\n  \"rainfall_mm\": 0,\n  \"water_level_cm\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/stations/{sid}/observations/import",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stations/:sid/observations/import",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "stations",
+                ":sid",
+                "observations",
+                "import"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "sid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Import Station"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/stations/{sid}/quality",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stations/:sid/quality",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "stations",
+                ":sid",
+                "quality"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "sid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Quality"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/stations/{sid}/forecast",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stations/:sid/forecast",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "stations",
+                ":sid",
+                "forecast"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "sid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Station Forecast"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Statistics",
+      "item": [
+        {
+          "name": "GET /api/v1/statistics/overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/statistics/overview",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "statistics",
+                "overview"
+              ],
+              "query": [
+                {
+                  "key": "date_from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "area_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "station_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "risk_level",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "data_type",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Overview"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/statistics/rainfall",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/statistics/rainfall",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "statistics",
+                "rainfall"
+              ],
+              "query": [
+                {
+                  "key": "group",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "area_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "station_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "risk_level",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "data_type",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Rainfall"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/statistics/water-level",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/statistics/water-level",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "statistics",
+                "water-level"
+              ],
+              "query": [
+                {
+                  "key": "group",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "area_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "station_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "risk_level",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "data_type",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Water Level"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/statistics/observations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/statistics/observations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "statistics",
+                "observations"
+              ],
+              "query": [
+                {
+                  "key": "kind",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "area_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "station_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "risk_level",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "data_type",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Bảng dữ liệu chi tiết có phân trang (mới nhất trước)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/statistics/alerts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/statistics/alerts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "statistics",
+                "alerts"
+              ],
+              "query": [
+                {
+                  "key": "group",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "area_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "station_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "risk_level",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "data_type",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Alerts"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/statistics/risk",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/statistics/risk",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "statistics",
+                "risk"
+              ],
+              "query": [
+                {
+                  "key": "group",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "area_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "station_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "risk_level",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "data_type",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Risk"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/statistics/flood-events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/statistics/flood-events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "statistics",
+                "flood-events"
+              ],
+              "query": [
+                {
+                  "key": "group",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "area_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "station_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "risk_level",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "data_type",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Flood Events"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/statistics/model-performance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/statistics/model-performance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "statistics",
+                "model-performance"
+              ],
+              "query": [
+                {
+                  "key": "date_from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "area_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "station_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "risk_level",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "data_type",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Model Performance"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/statistics/data-quality",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/statistics/data-quality",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "statistics",
+                "data-quality"
+              ],
+              "query": [
+                {
+                  "key": "date_from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "area_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "station_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "risk_level",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "data_type",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Data Quality"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/statistics/stations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/statistics/stations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "statistics",
+                "stations"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Stations"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/statistics/cameras",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/statistics/cameras",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "statistics",
+                "cameras"
+              ],
+              "query": [
+                {
+                  "key": "date_from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "area_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "station_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "risk_level",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "data_type",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Cameras"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/statistics/alert-handling",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/statistics/alert-handling",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "statistics",
+                "alert-handling"
+              ],
+              "query": [
+                {
+                  "key": "date_from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "area_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "station_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "risk_level",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "data_type",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Alert Handling"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Health"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+**/.venv
+**/node_modules
+**/__pycache__
+backend/storage
+backend/.env
+frontend/dist
+datasets/vision
+datasets/gis/vnm_adm2_simplified.geojson
+datasets/gis/gadm41_VNM_3.json.zip

@@ -1,0 +1,41 @@
+# Chạy: docker compose up --build -d   (cần file .env ở thư mục gốc, xem .env.example)
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Đặt POSTGRES_PASSWORD trong .env}
+      POSTGRES_DB: ${POSTGRES_DATABASE:-urban_flood_dss}
+    volumes: [postgres-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DATABASE:-urban_flood_dss}"]
+      interval: 5s
+      retries: 30
+  backend:
+    build: { context: ., dockerfile: backend/Dockerfile }
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_HOST: postgres
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}  # số worker uvicorn; trạng thái dùng chung nằm trong PostgreSQL
+      FORWARDED_ALLOW_IPS: "*"  # cổng 8000 chỉ mở cho máy chủ; chỉ container streamlit gửi X-Forwarded-For. Giới hạn đăng nhập theo tài khoản không phụ thuộc IP
+    depends_on:
+      postgres: { condition: service_healthy }
+    volumes: [backend-storage:/app/storage, backend-artifacts:/app/app/ai/artifacts]
+    ports: ["127.0.0.1:8000:8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 15s
+      start_period: 600s
+  streamlit:
+    build: { context: ., dockerfile: streamlit_app/Dockerfile }
+    restart: unless-stopped
+    environment:
+      API_BASE: http://backend:8000/api/v1
+    depends_on: [backend]
+    ports: ["8501:8501"]
+volumes:
+  postgres-data:
+  backend-storage:
+  backend-artifacts:

@@ -1,0 +1,39 @@
+# Python 3.11–3.13. TensorFlow/Keras cài riêng nếu chưa có: pip install "tensorflow>=2.17"
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.8
+pydantic-settings>=2.4
+email-validator>=2.2
+sqlalchemy>=2.0
+alembic>=1.13
+psycopg[binary]>=3.2
+# Chỉ cho scripts/migrate_mysql_to_postgres.py (đọc dữ liệu MySQL cũ); bỏ được sau khi chuyển xong
+pymysql>=1.1
+cryptography>=42
+bcrypt>=4.2
+pyjwt>=2.9
+python-multipart>=0.0.9
+httpx>=0.27
+pandas>=2.2
+numpy>=1.26
+openpyxl>=3.1
+scikit-learn>=1.5
+tensorflow>=2.17
+keras>=3.4
+ultralytics>=8.3
+opencv-python-headless>=4.10
+pillow>=10.4
+pytest>=8.3
+ruff>=0.6
+
+# Giao diện Streamlit (streamlit_app/)
+streamlit>=1.45
+plotly>=5.24
+folium>=0.17
+streamlit-folium>=0.22
+
+# Notebook (notebooks/): chạy và lưu kết quả tại chỗ
+nbformat>=5.10
+nbclient>=0.10
+ipykernel>=6.29
+matplotlib>=3.9
