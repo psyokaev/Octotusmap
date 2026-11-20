@@ -3,6 +3,9 @@
 Chạy: python -m app.ai.computer_vision.train --epochs 15
 Mặc định dùng dataset MÔ PHỎNG (datasets/vision/synthetic). Để dùng ảnh thật, truyền
 --data đến data.yaml của bộ ảnh đã gán nhãn polygon (Roboflow/CVAT xuất YOLO-seg).
+
+Giảm báo giả trên camera TP.HCM: scripts/collect_dry_camera_frames.py thu ảnh lúc khô (ảnh nền), rồi
+python -m app.ai.computer_vision.train --data datasets/vision/flood_hcm/data.yaml --from-active --epochs 15
 """
 
 import argparse
@@ -27,12 +30,28 @@ def evaluate(weights: str, data_yaml: Path, split: str = "test", imgsz: int = 32
             "precision": float(m.seg.mp), "recall": float(m.seg.mr)}
 
 
-def train(data_yaml: Path, out_dir: Path, epochs: int = 15, imgsz: int = 320, log=print) -> dict:
+def dry_false_alarm_rate(weights: str, img_dir: Path, threshold: float = 0.4) -> dict | None:
+    """Tỉ lệ ảnh camera lúc KHÔ bị báo ngập (tỉ lệ ROI ngập >= ngưỡng camera_ratio_high), đo y như production."""
+    import cv2
+
+    from app.ai.computer_vision import detector
+
+    files = sorted(img_dir.glob("*.jpg")) if img_dir.exists() else []
+    if not files:
+        return None
+    ratios = [detector.detect(cv2.imread(str(f)), None, weights).flood_ratio for f in files]
+    return {"n": len(ratios), "false_alarm_rate": round(sum(r >= threshold for r in ratios) / len(ratios), 4),
+            "mean_ratio": round(sum(ratios) / len(ratios), 4), "threshold": threshold}
+
+
+def train(data_yaml: Path, out_dir: Path, epochs: int = 15, imgsz: int = 320, log=print,
+          base_weights: str | None = None) -> dict:
     from ultralytics import YOLO
 
     out_dir.mkdir(parents=True, exist_ok=True)
     base = out_dir / "yolov8n-seg.pt"
-    model = YOLO(str(base) if base.exists() else "yolov8n-seg.pt")  # tải trọng số COCO để fine-tune
+    # base_weights: huấn luyện tiếp từ mô hình đang dùng; mặc định trọng số COCO
+    model = YOLO(base_weights or (str(base) if base.exists() else "yolov8n-seg.pt"))
     t0 = time.time()
     version = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
     model.train(data=str(data_yaml), epochs=epochs, imgsz=imgsz, batch=16, device="cpu", workers=0,
@@ -53,7 +72,7 @@ def train(data_yaml: Path, out_dir: Path, epochs: int = 15, imgsz: int = 320, lo
     shutil.copy(best, dest / "best.pt")
     log(f"YOLOv8-seg {version}: {metrics} ({secs:.0f}s)")
     return {"version": version, "weights": str(dest / "best.pt"), "metrics": metrics, "seconds": secs,
-            "params": {"epochs": epochs, "imgsz": imgsz, "base": "yolov8n-seg (COCO)"}}
+            "params": {"epochs": epochs, "imgsz": imgsz, "base": base_weights or "yolov8n-seg (COCO)"}}
 
 
 REAL_DESCRIPTION = ("Kaggle 'Flood Area Segmentation' (faizalkarim, CC0): 290 ảnh lũ THẬT có mask, "
@@ -61,8 +80,12 @@ REAL_DESCRIPTION = ("Kaggle 'Flood Area Segmentation' (faizalkarim, CC0): 290 �
 
 
 def train_and_register(db, epochs: int = 15, data_yaml: Path | None = None, log=print, imgsz: int = 320,
-                       description: str = REAL_DESCRIPTION) -> dict:
-    """Ảnh thật (data_yaml): đo trên tập test, chỉ kích hoạt nếu mask mAP50 vượt mô hình đang dùng."""
+                       description: str = REAL_DESCRIPTION, from_active: bool = False) -> dict:
+    """Ảnh thật (data_yaml): đo trên tập test rồi so với mô hình đang dùng.
+
+    Có ảnh camera khô (datasets/vision/hcm_dry/images/test): kích hoạt khi báo giả lúc khô GIẢM và mask mAP50
+    không tụt quá 0,05. Không có: kích hoạt khi mask mAP50 cao hơn.
+    """
     from app.core.config import get_settings
     from app.core.database import utcnow
     from app.models import ModelVersion, TrainingRun
@@ -74,8 +97,11 @@ def train_and_register(db, epochs: int = 15, data_yaml: Path | None = None, log=
     run = TrainingRun(task="VISION", params={"epochs": epochs, "data": str(data_yaml)})
     db.add(run)
     db.commit()
+    old = db.scalar(select(ModelVersion).where(ModelVersion.model_type == "YOLOV8_SEG",
+                                               ModelVersion.is_active.is_(True)))
+    base = old.artifact_path if from_active and old and Path(old.artifact_path).exists() else None
     try:
-        res = train(data_yaml, s.artifacts_dir / "vision", epochs, imgsz, log=log)
+        res = train(data_yaml, s.artifacts_dir / "vision", epochs, imgsz, log=log, base_weights=base)
     except Exception as e:
         run.status, run.finished_at, run.log = "FAILED", utcnow(), repr(e)
         db.commit()
@@ -83,11 +109,16 @@ def train_and_register(db, epochs: int = 15, data_yaml: Path | None = None, log=
     activate, old_test = True, None
     if not simulated:
         res["val_metrics"], res["metrics"] = res["metrics"], evaluate(res["weights"], data_yaml, "test", imgsz)
-        old = db.scalar(select(ModelVersion).where(ModelVersion.model_type == "YOLOV8_SEG",
-                                                   ModelVersion.is_active.is_(True)))
+        dry_dir = s.datasets_dir / "vision" / "hcm_dry" / "images" / "test"
+        dry_new = res["metrics"]["dry"] = dry_false_alarm_rate(res["weights"], dry_dir)
         if old and Path(old.artifact_path).exists():
             old_test = res["old_test_metrics"] = evaluate(old.artifact_path, data_yaml, "test", imgsz)
-            activate = res["metrics"]["mask_map50"] > old_test["mask_map50"]
+            dry_old = old_test["dry"] = dry_false_alarm_rate(old.artifact_path, dry_dir)
+            if dry_new and dry_old:
+                activate = (dry_new["false_alarm_rate"] < dry_old["false_alarm_rate"]
+                            and res["metrics"]["mask_map50"] >= old_test["mask_map50"] - 0.05)
+            else:
+                activate = res["metrics"]["mask_map50"] > old_test["mask_map50"]
         res["activated"] = activate
         res["params"] |= {"eval_split": "test", "old_test_metrics": old_test, "val_metrics": res["val_metrics"]}
         log(f"test mới={res['metrics']} cũ={old_test} -> kích hoạt={activate}")
@@ -122,6 +153,10 @@ if __name__ == "__main__":
     ap.add_argument("--epochs", type=int, default=15)
     ap.add_argument("--data", type=Path, default=None)
     ap.add_argument("--imgsz", type=int, default=320)
+    ap.add_argument("--from-active", action="store_true", help="huấn luyện tiếp từ mô hình đang dùng")
     a = ap.parse_args()
+    desc = (REAL_DESCRIPTION + " + ảnh camera giao thông TP.HCM lúc khô làm ảnh nền (hcm_dry, chia theo camera)"
+            if a.data and "flood_hcm" in str(a.data) else REAL_DESCRIPTION)
     with SessionLocal() as sess:
-        print(train_and_register(sess, a.epochs, a.data, imgsz=a.imgsz)["metrics"])
+        r = train_and_register(sess, a.epochs, a.data, imgsz=a.imgsz, description=desc, from_active=a.from_active)
+        print(r["metrics"], "cũ:", r.get("old_test_metrics"), "kích hoạt:", r.get("activated"))

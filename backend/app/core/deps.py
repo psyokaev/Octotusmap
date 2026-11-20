@@ -57,7 +57,7 @@ def is_staff(user: User | None) -> bool:
     return bool(user and {"ADMIN", "OPERATOR"} & set(user.role_codes))
 
 
-PUBLIC_EXPLANATION_KEYS = ("cause", "depth_cm", "wards", "wards_total")
+PUBLIC_EXPLANATION_KEYS = ("cause", "depth_cm", "wards", "wards_total", "lstm_flood_6h")
 
 
 def explanation_for(ex: dict | None, user: User | None) -> dict | None:

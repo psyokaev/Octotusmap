@@ -1,4 +1,5 @@
 """Fixture chung: `api` giả (không gọi mạng, không chạm DB) và dữ liệu mẫu."""
+import os
 import sys
 from pathlib import Path
 
@@ -6,6 +7,7 @@ import pytest
 
 APP_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(APP_DIR))
+os.environ["LIVE_EVENTS"] = "0"  # không mở luồng nghe SSE thật trong kiểm thử
 
 import api  # noqa: E402
 from staff_data import STAFF_ROUTES  # noqa: E402
@@ -90,7 +92,8 @@ class FakeApi:
             "/forecasts/model-status": MODEL_STATUS, "/forecasts/risk": FC_RISK,
             "/history/events": {"items": [EVENT], "total": 1, "page": 1, "size": 20},
             "/statistics/flood-events": {"by_time": [{"bucket": "2024-10", "count": 2, "max_depth_cm": 40}], "by_area": [], "total": 2},
-            "/notifications": {"items": [], "total": 0, "unread": 0}, "/admin/simulations": [],
+            "/notifications": {"items": [], "total": 0, "unread": 0}, "/admin/simulations": [], "/gis/simulations": [],
+            "/gis/traffic-cameras": {"type": "FeatureCollection", "features": [], "attribution": ""},
         }
 
     def _find(self, path):

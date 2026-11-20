@@ -21,7 +21,7 @@ YOLOv8-seg, hệ luật phân loại rủi ro LOW/MEDIUM/HIGH, bản đồ GIS k
 | Backend | Python 3.13, FastAPI (MVC + Service + Repository), SQLAlchemy 2.1, Alembic, Pydantic 2 |
 | CSDL | PostgreSQL 16 + PostGIS 3.4 (`geometry(POINT|MULTIPOLYGON,4326)`, GiST index) |
 | AI | TensorFlow 2.21 / Keras 3 (LSTM, GRU), Ultralytics YOLOv8n-seg (PyTorch CPU), scikit-learn, OpenCV |
-| Giao diện | Streamlit + Plotly + Folium (`streamlit_app/`, REST client của API FastAPI). Thư mục `frontend/` (React) còn trong repo nhưng không còn dùng |
+| Giao diện | Streamlit + Plotly + Folium (`streamlit_app/`, REST client của API FastAPI) |
 | Báo cáo | OpenPyXL (Excel), CSV UTF-8 BOM |
 | Bản đồ | OpenFreeMap (vector tiles OSM), ranh giới geoBoundaries (CC BY 3.0 IGO), Photon (geocode), OSRM (chỉ đường) |
 | Thời gian thực | Server-Sent Events + scheduler asyncio trong tiến trình |
@@ -49,16 +49,15 @@ $env:PYTHONUTF8="1"; .venv\Scripts\python scripts\bootstrap.py      # ~10 phút 
 .venv\Scripts\python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 
 # 5) chạy giao diện Streamlit (cửa sổ khác)
-cd ..; backend\.venv\Scripts\python -m streamlit run streamlit_app\app.py --server.port 8501
+cd ..\streamlit_app; ..\backend\.venv\Scripts\python -m streamlit run app.py --server.port 5173
 ```
 
-Từ lần sau, chỉ cần một lệnh ở thư mục gốc để chạy cả API và giao diện: `npm run dev` (PostgreSQL phải đang chạy).
+Từ lần sau, chỉ cần một lệnh ở thư mục gốc: `npm run dev`. Lệnh này tự bật PostgreSQL nếu đang tắt (mặc định `E:\pgsql`, đổi bằng biến `PG_HOME`), chạy API và giao diện, rồi mở trình duyệt ở http://localhost:5173 (`NO_BROWSER=1` để không mở).
 
-Hoặc dùng script: `powershell -File scripts\start-windows.ps1` (Linux/macOS: `sh scripts/start.sh`).
 
 | Thành phần | URL |
 |---|---|
-| Giao diện (Streamlit) | http://localhost:8501 |
+| Giao diện (Streamlit) | http://localhost:5173 (`npm run dev`), http://localhost:8501 (Docker) |
 | API docs (OpenAPI/Swagger) | http://127.0.0.1:8000/docs |
 | Health check | http://127.0.0.1:8000/health |
 
@@ -121,7 +120,6 @@ backend/
   scripts/bootstrap.py
   tests/             unit + integration
 streamlit_app/       giao diện Streamlit: app.py, nav.py, api.py, views/, tests/
-frontend/            giao diện React cũ (không còn dùng; chỉ xoá khi chủ dự án xác nhận)
 notebooks/           3 notebook đã chạy (dự báo mưa, YOLOv8 ngập, đánh giá cảnh báo)
 datasets/gis/        hcm_districts_2020.geojson (geoBoundaries)
 docs/                kiến trúc, CSDL, API, AI, kiểm thử, hạn chế, audit công cụ, ảnh chụp

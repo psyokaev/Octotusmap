@@ -54,8 +54,8 @@ def _filters(staff: bool) -> dict:
         sort = c[4].selectbox("Sắp xếp", list(sorts), format_func=sorts.get, key="al-sort")
         direction = st.radio("Thứ tự", ["desc", "asc"], format_func=lambda x: "Giảm dần" if x == "desc" else "Tăng dần",
                              horizontal=True, key="al-dir")
-        level = st.multiselect("Mức", LEVELS, format_func=lambda x: RISK[x]["label"], key="al-level")
-        status = st.multiselect("Trạng thái", list(TRANSITIONS), format_func=STATUS_VI.get, key="al-status") if staff else []
+        level = st.multiselect("Mức", LEVELS, format_func=lambda x: RISK[x]["label"], key="al-level", placeholder="Tất cả mức")
+        status = st.multiselect("Trạng thái", list(TRANSITIONS), format_func=STATUS_VI.get, key="al-status", placeholder="Tất cả trạng thái") if staff else []
     return {"status": status, "level": level, "area_id": area, "q": q, "date_from": vn_date_to_iso(d_from),
             "date_to": vn_date_to_iso(d_to, True), "sort": sort, "direction": direction}
 
@@ -132,8 +132,9 @@ def _detail(aid: int, staff: bool) -> None:
     try:
         a = api.get(f"/alerts/{aid}")
     except api.ApiError as e:
-        show_error(e)
         st.session_state.pop("alert_open", None)
+        if aid > 0:  # cảnh báo mô phỏng mất khi tắt mô phỏng: chỉ đóng chi tiết, không báo lỗi
+            show_error(e)
         return
     ex = a.get("explanation")
     with st.container(border=True):
@@ -200,6 +201,9 @@ def _staff_actions(a: dict) -> None:
         for k in ("al-pending", "al-snote", "al-anote", "al-vnote"):
             st.session_state.pop(k, None)
         st.session_state["al-cur"] = aid
+    if a["id"] < 0:  # cảnh báo mô phỏng: không xử lý, mất khi admin tắt mô phỏng
+        st.info("Cảnh báo MÔ PHỎNG: không cần xử lý, tự mất khi admin tắt mô phỏng ở Bản đồ › Mô phỏng.")
+        return
     st.markdown("**Xử lý cảnh báo**")
     if a["status"] == "NEW" and st.button("Tiếp nhận", type="primary", key="al-ack"):
         _act(lambda: api.post(f"/alerts/{aid}/acknowledge"), "Đã tiếp nhận cảnh báo")

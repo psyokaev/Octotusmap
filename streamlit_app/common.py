@@ -16,11 +16,13 @@ RISK = {
 }
 RISK_RANK = {"HIGH": 3, "MEDIUM": 2, "LOW": 1, "INSUFFICIENT_DATA": 0, "NO_DATA": -1}
 STATUS_VI = {"NEW": "Mới", "ACKNOWLEDGED": "Đã tiếp nhận", "IN_PROGRESS": "Đang xử lý", "RESOLVED": "Đã xử lý", "CLOSED": "Đã đóng"}
-CAUSE_VI = {"RAIN": "Mưa", "TIDE": "Triều cường", "RAIN_TIDE": "Mưa kết hợp triều", "OTHER": "Khác"}
+CAUSE_VI = {"RAIN": "Mưa", "TIDE": "Triều cường", "RAIN_TIDE": "Mưa kết hợp triều", "OTHER": "Khác",
+            "SIMULATION": "Mô phỏng"}
 FLOOD_CAUSE = {
     "TIDE": "Ngập do triều", "RAIN": "Ngập do mưa", "RAIN_TIDE": "Ngập do mưa kết hợp triều", "REPORT": "Người dân báo ngập",
     "CAMERA": "Camera phát hiện ngập (mô hình thử nghiệm, tham khảo)",
     "STORM": "Nguy cơ mưa dông cục bộ (ước tính)",
+    "SIMULATION": "MÔ PHỎNG: ngập giả định do admin tạo",
 }
 # trạng thái đoạn đường (routeStyle.ts)
 STATUS = {
@@ -47,12 +49,19 @@ def risk_md(level) -> str:
     return f":{_MD_COLOR.get(level, 'gray')}[**{risk_text(level)}**]"
 
 
+def risk_badge(level) -> str:
+    """Chip màu như bản React (chỉ dùng được trong nhãn/markdown của Streamlit)."""
+    return f":{_MD_COLOR.get(level, 'gray')}-badge[{risk_text(level)}]"
+
+
 def flood_cause(cause=None, depth_cm=None) -> str | None:
     """Nguyên nhân ngập + độ sâu ước tính (cm); None khi không có nguyên nhân."""
     phrase = FLOOD_CAUSE.get(cause) if cause else None
     if not phrase:
         return None
-    return f"{phrase}, khoảng {depth_cm:g} cm (ước tính)" if depth_cm is not None else phrase
+    if depth_cm is None:
+        return phrase
+    return f"{phrase}, khoảng {depth_cm:g} cm" + ("" if cause == "SIMULATION" else " (ước tính)")
 
 
 def parse_dt(iso) -> datetime | None:

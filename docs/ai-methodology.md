@@ -91,6 +91,20 @@ CAPE, lifted index và xác suất mưa gần như ngày nào mùa mưa cũng ca
 
 Hạn chế: ngưỡng chọn trên chính tập đánh giá, không có tập held-out; historical-forecast ghép các giờ đầu của mỗi lần chạy nên lạc quan hơn dự báo thật. Cần đo lại bằng Previous Runs API.
 
+## Mưa vệ tinh GPM IMERG đối chiếu Open-Meteo (20/11/2026)
+
+`services/imerg_service.py` lấy IMERG Late run theo ngày (NASA, miễn phí, lưới 0,1°) cho ô chứa tâm mỗi quận, 748 ngày 01/11/2024–18/11/2026, lưu bảng `satellite_rainfall_daily`. `scripts/compare_imerg_openmeteo.py` so với tổng mưa giờ Open-Meteo của điểm lưới quận trong cùng ngày UTC:
+
+| | Mọi quận-ngày (17.832) | Quận-ngày có ngập do mưa theo báo chí (99) |
+|---|---|---|
+| Mưa trung bình IMERG / Open-Meteo | 5,91 / 5,92 mm | **19,44 / 11,08 mm** |
+| Trung vị IMERG / Open-Meteo | 2,03 / 2,30 mm | 13,31 / 9,60 mm |
+| Tỉ lệ ngày ≥ 20 mm IMERG / Open-Meteo | 7,1% / 6,7% | **33,3% / 14,1%** |
+| Tỉ lệ ngày ≥ 50 mm IMERG / Open-Meteo | 0,6% / 0,1% | **7,1% / 0%** |
+| Pearson r | 0,566 | 0,522 |
+
+Trung bình dài hạn hai nguồn khớp nhau, nhưng ở đúng các ngày ngập do mưa, Open-Meteo ghi thiếu khoảng 43% lượng mưa và gần như không có ngày từ 50 mm, còn IMERG có. Đây là bằng chứng định lượng cho việc hệ thống bỏ sót mưa cục bộ khi chỉ dựa vào dữ liệu mô hình. IMERG trễ 1–2 ngày và chỉ có theo ngày, nên hiện dùng để đối chiếu và đánh giá, chưa dùng cho cảnh báo tức thời. Hướng tiếp: dùng IMERG nửa giờ một (Early run, trễ ~4 giờ) làm đặc trưng cho LSTM ngập theo quận.
+
 ## 1. Dữ liệu mô phỏng (thay thế tạm thời cho dữ liệu khí tượng thủy văn)
 
 - **Mưa đối lưu**: xác suất phát sinh dông theo mùa (tháng 5–11) và giờ trong ngày (đỉnh 14–18h giờ VN); dông có tâm
@@ -147,6 +161,25 @@ Mức cải thiện nhỏ (khoảng 2–4% loss) và đánh giá trong mẫu (c�
 ### Thí nghiệm đầu xác suất ngập (11/2026, không tích hợp)
 
 `scripts/experiment_flood_head.py` huấn luyện đầu ngập từ 74 sự kiện báo chí với cổng chấp nhận đặt trước. Kết quả test: PR-AUC GRU 0,0118 so với công thức `flood_index` 0,0132; event-day recall 0,444 so với 0,667; tập test chỉ có 5 ngày sự kiện. Không qua cổng nên sản phẩm giữ công thức `flood_index`.
+
+### Mô hình ngập riêng theo quận (20/11/2026, qua cổng, chưa tích hợp)
+
+`scripts/experiment_flood_district.py`. Thay đổi so với lần trên:
+
+- **Nhãn:** 246 sự kiện báo chí (thêm 172, mỗi dòng có URL bài gốc đã đọc; kiểm chứng ngẫu nhiên 2 dòng khớp bài), 65 ngày, 11/2024–11/2026.
+- **Bài toán:** "quận có ngập trong 6 giờ tới" (một đầu ra), thay vì đầu ngập theo giờ gắn vào GRU mưa.
+- **Mô hình:** GRU/LSTM 32 đơn vị riêng cho ngập; đầu vào 24 giờ gồm mưa, triều đã lệch 4 giờ, sin/cos giờ, cùng độ cao, cờ điểm ngập và cờ quận ven triều; class weight cho lớp hiếm.
+- **Chia:** theo ngày giờ Việt Nam, ngày có sự kiện 60/20/20 (38/13/13 ngày). Ngưỡng chọn trên validation. Công thức được tính bằng mưa quan trắc (lợi thế cho công thức).
+
+| Seed | Công thức PR-AUC / event-day recall | GRU | LSTM | LSTM + công thức |
+|---|---|---|---|---|
+| 42 | 0,005 / 0,08 | 0,035 / 0,12 | 0,043 / 0,12 | 0,012 / 0,12 |
+| 7 | 0,006 / 0,06 | 0,020 / 0,12 | 0,023 / 0,18 | 0,019 / 0,09 |
+| 123 | 0,008 / 0,36 | 0,046 / 0,32 | 0,046 / 0,36 | 0,026 / 0,41 |
+
+LSTM qua cổng (PR-AUC và event-day recall đều không kém công thức) ở cả 3 seed; GRU trượt ở seed 123. Mô hình xếp hạng nguy cơ tốt hơn 4–8 lần, nhưng recall theo ngày ở ngưỡng cảnh báo còn thấp (0,12–0,36) và xác suất chưa hiệu chỉnh (class weight làm xác suất phồng), nên chưa thay công thức trong luồng cảnh báo.
+
+Hạn chế của nhãn: các tháng 2025-01, 2026-02 đến 2026-04 và 2026-08 không tìm được tin ngập. 2026-08 là mùa mưa, nên có thể có trận bị coi nhầm là "không ngập". 130/172 dòng mới có giờ gần đúng.
 
 ## 3. YOLOv8-seg phát hiện vùng ngập (`app/ai/computer_vision/`)
 

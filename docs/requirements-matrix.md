@@ -7,8 +7,8 @@ Trạng thái: NOT_STARTED · IN_PROGRESS · IMPLEMENTED · TESTED · BLOCKED.
 
 | Đề cương | Triển khai | Lý do |
 |---|---|---|
-| PostgreSQL/PostGIS | PostgreSQL 16.4 + PostGIS 3.4.2 (cài portable `E:/pgsql`) | Đúng đề cương. Từng triển khai trên MySQL 8 rồi chuyển lại (`scripts/migrate_mysql_to_postgres.py`, 27 bảng khớp số dòng); MySQL cũ giữ nguyên, không dùng |
-| Dashboard Streamlit/Plotly | Streamlit + Plotly + Folium (`streamlit_app/`) | Đúng đề cương. Bản React cũ (`frontend/`) còn trong repo, không dùng; một số tính năng chưa chuyển (xem known-limitations) |
+| PostgreSQL/PostGIS | PostgreSQL 16.4 + PostGIS 3.4.2 (cài portable `E:/pgsql`) | Đúng đề cương. Từng triển khai trên MySQL 8 rồi chuyển lại (27 bảng khớp số dòng); script chuyển một lần đã xoá sau khi xong |
+| Dashboard Streamlit/Plotly | Streamlit + Plotly + Folium (`streamlit_app/`) | Đúng đề cương. Bản React cũ đã xoá khỏi repo |
 | YOLOv8 "phát hiện đối tượng" ước lượng diện tích | YOLOv8-**seg** | Diện tích vùng ngập cần mask, không suy được từ bounding box |
 | Dữ liệu khí tượng thủy văn công khai | Open-Meteo (mô hình trên lưới), điểm ngập công bố, báo chí; không có trạm đo mưa/mực nước cống thật | Chưa có nguồn trạm đo được cấp phép; DEMO dùng dữ liệu mô phỏng có nhãn |
 | LSTM dự báo xác suất ngập | LSTM/GRU dự báo mưa; xác suất ngập ước tính bằng công thức (`flood_index`) | Chưa có nhãn ngập thật để huấn luyện |
@@ -53,7 +53,7 @@ Trạng thái: NOT_STARTED · IN_PROGRESS · IMPLEMENTED · TESTED · BLOCKED.
 | DEMO/LIVE/STALE/UNAVAILABLE, nhãn mô phỏng | TESTED | `station_service.data_status`, `is_simulated` | test_station_list_filters... |
 | PostgreSQL tự tạo DB, migrations (baseline `0001_initial_postgis_baseline`), FK, index GiST, seed idempotent | TESTED | `scripts/bootstrap.py`, `migrations/` | test_seed_idempotent, test_foreign_keys... |
 | Docker Compose (postgis/postgis:16-3.4, backend, streamlit) + Dockerfile | IMPLEMENTED (chưa chạy) | `docker-compose.yml`, `streamlit_app/Dockerfile` | BLOCKED: máy không có Docker |
-| Script Windows/Linux | IMPLEMENTED | `scripts/start-windows.ps1`, `scripts/start.sh` | — |
+| Chạy một lệnh | IMPLEMENTED | `npm run dev` (`scripts/dev.mjs`, tự bật PostgreSQL) | — |
 | Responsive / dark mode | IMPLEMENTED | Streamlit tự co giãn và theo theme; không còn E2E mobile của bản React | — |
 
 ## Phần chưa đạt đề cương

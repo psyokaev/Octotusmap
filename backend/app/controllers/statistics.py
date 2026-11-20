@@ -7,6 +7,7 @@ from app.core.database import utcnow
 from app.core.deps import DB, Operator
 from app.core.errors import AppError
 from app.schemas.common import to_utc_naive
+from app.services import simulation_overlay
 from app.services import statistics_service as stats
 from app.services.statistics_service import Filters
 
@@ -32,6 +33,8 @@ F = Annotated[Filters, Depends(filters)]
 
 @router.get("/overview")
 def overview(db: DB, _: Operator, f: F):
+    if f.data_type != "REAL":
+        return stats.with_simulation_overview(db, stats.overview(db, f), simulation_overlay.affected(db))
     return stats.overview(db, f)
 
 
@@ -57,14 +60,27 @@ def observation_table(db: DB, _: Operator, f: F, kind: Literal["rainfall", "wate
             "page": page, "size": size, "total": total}
 
 
+@router.get("/satellite-rainfall")
+def satellite_rainfall(db: DB, _: Operator, f: F):
+    """Mưa vệ tinh GPM IMERG so với Open-Meteo theo ngày (trung bình mỗi quận)."""
+    return stats.satellite_vs_model(db, f)
+
+
 @router.get("/alerts")
 def alerts(db: DB, _: Operator, f: F, group: Group = "day"):
+    if f.data_type != "REAL":
+        aff = simulation_overlay.affected(db)
+        return stats.with_simulation_alerts(stats.alert_stats(db, f, group), [
+            v for v in simulation_overlay.virtual_alerts(db, aff)
+            if simulation_overlay.in_range(v["triggered_at"], f.date_from, f.date_to)
+            and (not f.area_id or v["area"].id == f.area_id)])
     return stats.alert_stats(db, f, group)
 
 
 @router.get("/risk")
 def risk(db: DB, _: Operator, f: F, group: Group = "day"):
-    return {"trend": stats.risk_trend(db, f, group), "current": stats.latest_risk_counts(db)}
+    sim = simulation_overlay.affected(db) if f.data_type != "REAL" else None
+    return {"trend": stats.risk_trend(db, f, group), "current": stats.latest_risk_counts(db, sim)}
 
 
 @router.get("/flood-events")

@@ -98,3 +98,13 @@ def test_storm_signal_raises_only_to_medium():
     assert r.level == "MEDIUM" and "mưa dông" in r.explanation["level_reason"]
     hi = evaluate(full(storm_models=7, camera_flood_ratio=0.9), CFG)
     assert hi.level == "HIGH" and "mưa dông" not in hi.explanation["level_reason"]  # override vẫn quyết định
+
+
+def test_direct_evidence_still_counts_when_model_data_stale():
+    stale = dict(data_age_minutes=500, camera_flood_ratio=None)
+    r = evaluate(full(**stale, report_confirmations=2), CFG)
+    assert r.level == "HIGH" and "báo cáo ngập đã được xác nhận" in r.explanation["level_reason"]
+    assert evaluate(full(**stale, report_confirmations=0), CFG).level == "MEDIUM"
+    assert evaluate(full(data_age_minutes=500, camera_flood_ratio=0.6), CFG).level == "HIGH"
+    assert evaluate(RiskInputs(report_confirmations=1), CFG).level == "HIGH"  # thiếu hẳn dữ liệu mưa/triều
+    assert evaluate(full(**stale), CFG).level == "INSUFFICIENT_DATA"

@@ -419,3 +419,20 @@ class AuditOut(ORM):
     detail: dict | None
     ip: str
     created_at: UtcDatetime
+
+
+# ---- mô phỏng ngập (admin tạo; cán bộ xem)
+class SimulationIn(BaseModel):
+    latitude: float = Field(ge=-90, le=90)
+    longitude: float = Field(ge=-180, le=180)
+    radius_m: int = Field(ge=100, le=2000)
+    depth_cm: int = Field(ge=1, le=300)
+
+
+class SimulationOut(ORM):
+    id: int
+    latitude: float
+    longitude: float
+    radius_m: int
+    depth_cm: int
+    created_at: UtcDatetime

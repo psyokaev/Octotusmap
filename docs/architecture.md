@@ -1,6 +1,6 @@
 # Kiến trúc hệ thống
 
-Modular monolith, Client–Server. Một tiến trình FastAPI phục vụ REST API, SSE và chạy pipeline định kỳ; giao diện Streamlit (cổng 8501) là một tiến trình riêng gọi REST API (cổng 8000), gửi `X-Forwarded-For` để rate limit theo IP người dùng. Giao diện không truy cập CSDL trực tiếp.
+Modular monolith, Client–Server. Một tiến trình FastAPI phục vụ REST API, SSE và chạy pipeline định kỳ; giao diện Streamlit (cổng 5173 khi chạy `npm run dev`, 8501 trong Docker) là một tiến trình riêng gọi REST API (cổng 8000), gửi `X-Forwarded-For` để rate limit theo IP người dùng. Giao diện không truy cập CSDL trực tiếp.
 
 ```mermaid
 flowchart LR

@@ -774,10 +774,21 @@ def _close_open_alerts(db, area_name):
     return aid
 
 
+def _no_station_water(monkeypatch):
+    """Bỏ mực nước trạm mô phỏng (DEMO): nó dao động theo giờ chạy test và có lúc vượt ngưỡng, ép mức Cao."""
+    from dataclasses import replace
+
+    from app.services import risk_service
+
+    orig = risk_service.evaluate
+    monkeypatch.setattr(risk_service, "evaluate", lambda inp, cfg, prev=None: orig(replace(inp, water_level_ratio=None), cfg, prev))
+
+
 def test_tide_depth_rollup_by_horizon_and_alert_message(client, db, box, monkeypatch):
     from app.models import AdministrativeArea
     from app.services import alert_service, risk_service
     from app.services import openmeteo_service as om
+    _no_station_water(monkeypatch)
 
     issued = box.issued
     hot_t = issued + timedelta(hours=2)  # mock tide_at theo t: chỉ mốc +2h có triều cao
@@ -886,6 +897,7 @@ def test_camera_detection_is_ward_level(db, box, monkeypatch):
     from app.models import AdministrativeArea, Camera, CameraDetection, CameraFrame, DataSource
     from app.services import gis_service, risk_service
     from app.services import openmeteo_service as om
+    _no_station_water(monkeypatch)
 
     monkeypatch.setattr(om, "tide_stats", lambda _db: None)
     monkeypatch.setattr(om, "tide_at", lambda _db, _t: None)
@@ -1103,3 +1115,71 @@ def test_change_password_is_rate_limited(client, citizen, monkeypatch):
     body = {"current_password": "sai-mat-khau", "new_password": "MatKhauMoi12345"}
     codes = [client.post(f"{API}/auth/change-password", json=body, headers=citizen).status_code for _ in range(3)]
     assert codes == [400, 400, 429]
+
+
+def test_simulation_reaches_staff_pages_until_cleared(client, admin, operator, citizen, db):
+    sim = {**SIM, "radius_m": 2000, "depth_cm": 40}
+    client.delete(f"{API}/admin/simulations", headers=admin)
+    assert client.post(f"{API}/admin/simulations", headers=admin, json=sim).status_code == 201
+    alerts_before = db.scalar(select(func.count()).select_from(Alert))
+
+    def seen(hdr):
+        client.cookies.clear()
+        layers = client.get(f"{API}/gis/risk-layers", headers=hdr).json()["features"]
+        al = client.get(f"{API}/alerts", headers=hdr).json()["items"]
+        ev = client.get(f"{API}/history/events", headers=hdr).json()["items"]
+        rk = client.get(f"{API}/forecasts/risk", headers=hdr).json()
+        return ({f["id"] for f in layers if f["properties"].get("cause") == "SIMULATION"},
+                [a for a in al if a["is_simulated"] and a["id"] < 0], [e for e in ev if e["id"] < 0],
+                [r for r in rk if (r["explanation"] or {}).get("cause") == "SIMULATION"])
+
+    areas, alerts, events, risk = seen(operator)
+    assert areas and alerts and events and risk
+    assert alerts[0]["title"].startswith("[MÔ PHỎNG]") and alerts[0]["cause"] == "SIMULATION" and alerts[0]["depth_cm"] == 40
+    assert risk[0]["risk_level"] == "HIGH" and risk[0]["is_simulated"]
+    assert client.get(f"{API}/alerts/{alerts[0]['id']}", headers=operator).json()["history"] == []
+    ov = client.get(f"{API}/statistics/overview", headers=operator).json()
+    assert ov["simulation"]["districts"] == len(alerts) and ov["areas_high"] >= len(alerts)
+    assert client.get(f"{API}/statistics/overview", headers=operator, params={"data_type": "REAL"}).json().get("simulation") is None
+    assert client.get(f"{API}/statistics/alerts", headers=operator).json()["simulated"] == len(alerts)
+    assert [s["id"] for s in client.get(f"{API}/gis/simulations", headers=operator).json()]
+    for hdr in (citizen, {}):  # người dân/khách không bao giờ thấy mô phỏng
+        assert seen(hdr) == (set(), [], [], [])
+        client.cookies.clear()
+        assert client.get(f"{API}/alerts/{alerts[0]['id']}", headers=hdr).status_code == 404
+    assert client.get(f"{API}/gis/simulations", headers=citizen).status_code == 403
+    db.rollback()
+    assert db.scalar(select(func.count()).select_from(Alert)) == alerts_before  # không ghi vào bảng thật
+
+    assert client.delete(f"{API}/admin/simulations", headers=admin).status_code == 204
+    assert seen(operator) == (set(), [], [], [])  # tắt mô phỏng là hết tham chiếu
+    assert client.get(f"{API}/alerts/{alerts[0]['id']}", headers=operator).status_code == 404
+
+
+def test_pdf_summary_report_staff_only(client, operator, citizen):
+    r = client.get(f"{API}/exports/pdf", headers=operator)
+    assert r.status_code == 200 and r.headers["content-type"] == "application/pdf" and r.content.startswith(b"%PDF")
+    assert ".pdf" in r.headers["content-disposition"]
+    client.cookies.clear()
+    assert client.get(f"{API}/exports/pdf", headers=citizen).status_code == 403
+    assert client.get(f"{API}/exports/pdf").status_code == 401
+
+
+def test_satellite_rainfall_series_staff_only(client, operator, citizen, db):
+    from datetime import date
+
+    from app.models import AdministrativeArea, SatelliteRainfallDaily
+
+    q1 = db.scalar(select(AdministrativeArea).where(AdministrativeArea.name == "Quận 1"))
+    row = SatelliteRainfallDaily(area_id=q1.id, day=date(2030, 1, 5), rain_mm=12.5, product="TEST")
+    db.add(row)
+    db.commit()
+    try:
+        r = client.get(f"{API}/statistics/satellite-rainfall", headers=operator,
+                       params={"date_from": "2030-01-04T00:00:00Z", "date_to": "2030-01-07T00:00:00Z"}).json()
+        assert r == [{"day": "2030-01-05", "imerg_mm": 12.5, "model_mm": None}]
+        client.cookies.clear()
+        assert client.get(f"{API}/statistics/satellite-rainfall", headers=citizen).status_code == 403
+    finally:
+        db.delete(row)
+        db.commit()

@@ -43,6 +43,7 @@ USERS = [{"id": 1, "username": "admin", "email": "a@b.vn", "full_name": "Quản 
 STAFF_ROUTES = {
     "/stations": {"items": [STATION], "total": 1, "page": 1, "size": 20},
     "/statistics/overview": OVERVIEW,
+    "/statistics/satellite-rainfall": [{"day": "2025-06-01", "imerg_mm": 12.5, "model_mm": 8.1}],
     "/statistics/rainfall": {"series": _series(), "unit": "mm", "by_station": [
         {"station_id": 5, "code": "R01", "name": "Trạm mưa 1", "sum": 9.0, "avg": 3.0, "max": 5.0, "count": 30}]},
     "/statistics/water-level": {"series": _series(), "by_station": [], "unit": "cm"},

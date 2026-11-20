@@ -3,6 +3,7 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import OperationalError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 log = logging.getLogger("app")
@@ -37,6 +38,12 @@ def register_error_handlers(app: FastAPI) -> None:
     async def _val(_: Request, e: RequestValidationError):
         details = [{"loc": list(x["loc"]), "msg": x["msg"]} for x in e.errors()]
         return JSONResponse(_body("VALIDATION_ERROR", "Dữ liệu không hợp lệ", details), status_code=422)
+
+    @app.exception_handler(OperationalError)
+    async def _db(_: Request, e: OperationalError):
+        log.error("Database unavailable: %s", e.orig)
+        return JSONResponse(_body("DB_UNAVAILABLE", "Không kết nối được cơ sở dữ liệu, kiểm tra PostgreSQL"),
+                            status_code=503)
 
     @app.exception_handler(Exception)
     async def _any(_: Request, e: Exception):

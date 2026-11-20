@@ -1,5 +1,6 @@
 """Camera giao thông công khai của TP.HCM: đọc danh sách và proxy ảnh (không lưu ảnh)."""
 
+import logging
 import re
 import threading
 import time
@@ -9,10 +10,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.core.database import utcnow
 from app.core.errors import AppError
 from app.models import Camera, DataSource
 
-BASE = "https://giaothong.hochiminhcity.gov.vn"
+BASE = get_settings().traffic_camera_base
 SOURCE_CODE = "HCMC_TRAFFIC"
 CODE_PREFIX = "TT-"
 CACHE_S = 30
@@ -58,7 +60,8 @@ def snapshot(camera: Camera, timeout: float = 10) -> bytes:
     if hit and time.monotonic() - hit[0] < CACHE_S:
         return hit[1]
     try:
-        r = httpx.get(f"{BASE}/render/ImageHandler.ashx", params={"id": cam_id}, timeout=timeout,
+        r = httpx.get(f"{get_settings().traffic_camera_base}/render/ImageHandler.ashx", params={"id": cam_id},
+                      timeout=timeout,
                       headers={"User-Agent": get_settings().external_user_agent})
         r.raise_for_status()
     except httpx.HTTPError as e:
@@ -70,3 +73,40 @@ def snapshot(camera: Camera, timeout: float = 10) -> bytes:
             _cache.clear()
         _cache[cam_id] = (time.monotonic(), r.content)
     return r.content
+
+
+FAILS_TO_DISABLE = 3
+
+
+def check_health(db: Session, n: int) -> dict:
+    """Kiểm tra ảnh n camera giao thông lâu chưa kiểm nhất: lỗi FAILS_TO_DISABLE lần liên tiếp -> INACTIVE,
+    có ảnh lại -> ACTIVE. Cả loạt đều lỗi thì coi là cổng thành phố sập/đổi địa chỉ: không khoá camera nào."""
+    cams = list(db.scalars(select(Camera).where(
+        Camera.code.like(CODE_PREFIX + "%"), Camera.deleted_at.is_(None), Camera.status.in_(["ACTIVE", "INACTIVE"]))
+        .order_by(Camera.snapshot_checked_at.asc().nulls_first()).limit(n)))
+    results = []
+    for c in cams:
+        try:
+            snapshot(c, timeout=5)
+            results.append((c, True))
+        except AppError:
+            results.append((c, False))
+    outage = len(results) >= 3 and not any(ok for _, ok in results)
+    if outage:
+        logging.getLogger(__name__).warning("Cả %d camera giao thông đều lỗi ảnh: cổng thành phố sập hoặc đổi địa chỉ "
+                                            "(TRAFFIC_CAMERA_BASE)", len(results))
+    out = {"checked": len(results), "failed": 0, "disabled": 0, "restored": 0, "outage": outage}
+    now = utcnow()
+    for c, ok in results:
+        c.snapshot_checked_at = now
+        if ok:
+            c.snapshot_fail_count = 0
+            if c.status == "INACTIVE":
+                c.status, out["restored"] = "ACTIVE", out["restored"] + 1
+        elif not outage:
+            out["failed"] += 1
+            c.snapshot_fail_count = (c.snapshot_fail_count or 0) + 1
+            if c.snapshot_fail_count >= FAILS_TO_DISABLE and c.status == "ACTIVE":
+                c.status, out["disabled"] = "INACTIVE", out["disabled"] + 1
+    db.commit()
+    return out

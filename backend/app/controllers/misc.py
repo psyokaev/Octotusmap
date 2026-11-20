@@ -36,9 +36,8 @@ class RouteIn(BaseModel):
 def route(body: RouteIn, request: Request, db: DB, user: OptionalUser):
     if not route_limiter.allow(request.client.host if request.client else "?"):
         raise HTTPException(429, "Quá nhiều yêu cầu chỉ đường, thử lại sau 1 phút")
-    # ngập mô phỏng chỉ ảnh hưởng tuyến của admin; người khác luôn nhận kết quả theo dữ liệu thật
-    return routing_service.route(db, body.start, body.end, body.horizon_h,
-                                 include_simulations=bool(user and "ADMIN" in user.role_codes))
+    # ngập mô phỏng chỉ ảnh hưởng tuyến của cán bộ; người dân/khách luôn nhận kết quả theo dữ liệu thật
+    return routing_service.route(db, body.start, body.end, body.horizon_h, include_simulations=is_staff(user))
 
 
 @router.get("/notifications")

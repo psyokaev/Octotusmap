@@ -3,11 +3,11 @@ from typing import Literal
 from fastapi import APIRouter, Query
 from fastapi.responses import Response
 
+from app.controllers.statistics import F
 from app.core.database import utcnow
 from app.core.deps import DB, Operator
 from app.models import ExportHistory
 from app.repositories.base import paginate
-from app.controllers.statistics import F
 from app.services import export_service
 from app.services.export_service import REPORTS
 
@@ -21,6 +21,18 @@ def excel(db: DB, user: Operator, f: F, report: str = Query("full", json_schema_
     name = f"bao_cao_{report}_{utcnow():%Y%m%d_%H%M}.xlsx"
     export_service.record(db, user, report, "xlsx", f, name, n)
     return Response(data, media_type=XLSX, headers={"Content-Disposition": f'attachment; filename="{name}"'})
+
+
+@router.get("/pdf")
+def pdf(db: DB, user: Operator, f: F):
+    """Báo cáo PDF tổng hợp: chỉ số, mưa/mực nước, nguy cơ, cảnh báo, sự kiện ngập, mô hình AI, chất lượng dữ liệu."""
+    from app.services import report_pdf
+
+    data = report_pdf.build(db, f, user, report_pdf.area_name(db, f.area_id))
+    name = f"bao_cao_tong_hop_{utcnow():%Y%m%d_%H%M}.pdf"
+    export_service.record(db, user, "pdf_summary", "pdf", f, name, 0)
+    return Response(data, media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="{name}"'})
 
 
 @router.get("/csv")

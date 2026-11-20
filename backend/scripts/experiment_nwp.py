@@ -56,7 +56,7 @@ def main():
     import keras
     from keras import layers
 
-    from app.ai.evaluation.metrics import classification_metrics, roc_auc
+    from app.ai.evaluation.metrics import roc_auc
     from app.ai.forecasting.model import build_model
     from app.ai.forecasting.preprocessing import (FEATURES, HORIZON, LOOKBACK, Scaler, apply_scaler,
                                                   chronological_split, clean_station_frame)

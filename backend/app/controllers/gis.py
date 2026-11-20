@@ -3,8 +3,9 @@ import json
 
 from fastapi import APIRouter, File, Query, Request, UploadFile
 from sqlalchemy import func, select
+from sqlalchemy.orm import aliased
 
-from app.core.deps import DB, Admin, OptionalUser, explanation_for, is_staff
+from app.core.deps import DB, Admin, Operator, OptionalUser, explanation_for, is_staff
 from app.core.errors import AppError, NotFound
 from app.core.spatial import valid_hcm_coordinate
 from app.gis.importer import import_geojson
@@ -14,13 +15,14 @@ from app.models import (
     Camera,
     DataSource,
     FloodRiskSnapshot,
+    FloodSimulation,
     Forecast,
     HistoricalFloodEvent,
     MonitoringStation,
 )
 from app.repositories import observations as obs_repo
-from app.schemas.views import AreaOut
-from app.services import camera_service, gis_service, station_service, traffic_camera_service
+from app.schemas.views import AreaOut, SimulationOut
+from app.services import camera_service, gis_service, simulation_overlay, station_service, traffic_camera_service
 from app.services.audit_service import audit
 
 router = APIRouter(prefix="/gis", tags=["GIS"])
@@ -49,8 +51,14 @@ def boundaries(db: DB):
 
 
 @router.get("/risk-layers")
-def risk_layers(db: DB, horizon: int = Query(0, ge=0, le=6)):
-    return gis_service.risk_geojson(db, horizon)
+def risk_layers(db: DB, user: OptionalUser, horizon: int = Query(0, ge=0, le=6)):
+    return gis_service.risk_geojson(db, horizon, simulation=is_staff(user))
+
+
+@router.get("/simulations", response_model=list[SimulationOut])
+def simulations(db: DB, _: Operator):
+    """Vùng ngập mô phỏng đang bật (cán bộ xem; chỉ admin tạo/xoá ở /admin/simulations)."""
+    return list(db.scalars(select(FloodSimulation).order_by(FloodSimulation.created_at.desc())))
 
 
 @router.get("/features")
@@ -99,6 +107,11 @@ def features(db: DB, user: OptionalUser, horizon: int = Query(0, ge=0, le=6)):
         "id": a.id, "code": a.code, "risk_level": a.risk_level, "title": a.title,
         "status": a.status if staff else "NEW",
         "triggered_at": a.triggered_at.isoformat() + "Z", "is_simulated": a.is_simulated}) for a in db.scalars(al)]
+    if staff:
+        al_feats += [_pt(v["area"].centroid_lon, v["area"].centroid_lat, {
+            "id": v["id"], "code": v["code"], "risk_level": v["risk_level"], "title": v["title"], "status": "NEW",
+            "triggered_at": v["triggered_at"].isoformat() + "Z", "is_simulated": True})
+            for v in simulation_overlay.virtual_alerts(db, simulation_overlay.affected(db))]
     fcoll = lambda f: {"type": "FeatureCollection", "features": f}  # noqa: E731
     return {"stations": fcoll(st_feats), "cameras": fcoll(cam_feats), "flood_events": fcoll(ev_feats),
             "alerts": fcoll(al_feats), "horizon_h": horizon,
@@ -123,11 +136,14 @@ def identify(db: DB, user: OptionalUser, lat: float = Query(ge=-90, le=90), lon:
     risk = []
     if area:
         issued = gis_service.latest_issue_time(db)
-        risk = [{"horizon_h": r.horizon_h, "risk_level": r.risk_level, "score": r.score,
-                 "flood_probability": r.flood_probability, "rainfall_mm": r.rainfall_mm,
-                 "explanation": explanation_for(r.explanation, user)} for r in db.scalars(select(FloodRiskSnapshot).where(
-                     FloodRiskSnapshot.area_id == area.id, FloodRiskSnapshot.issued_at == issued)
-                     .order_by(FloodRiskSnapshot.horizon_h))]
+        sim = simulation_overlay.affected(db).get(area.id) if is_staff(user) else None
+        risk = [simulation_overlay.overlay_risk({
+            "horizon_h": r.horizon_h, "risk_level": r.risk_level, "score": r.score,
+            "flood_probability": r.flood_probability, "rainfall_mm": r.rainfall_mm,
+            "explanation": explanation_for(r.explanation, user)}, sim)
+            for r in db.scalars(select(FloodRiskSnapshot).where(
+                FloodRiskSnapshot.area_id == area.id, FloodRiskSnapshot.issued_at == issued)
+                .order_by(FloodRiskSnapshot.horizon_h))]
     hist = db.execute(select(func.count(), func.max(HistoricalFloodEvent.started_at),
                              func.max(HistoricalFloodEvent.max_depth_cm))
                       .where(func.ST_DistanceSphere(HistoricalFloodEvent.__table__.c.location,
@@ -149,20 +165,27 @@ def area_detail(aid: int, db: DB, user: OptionalUser):
     snaps = list(db.scalars(select(FloodRiskSnapshot).where(FloodRiskSnapshot.area_id == aid,
                                                             FloodRiskSnapshot.issued_at == issued)
                             .order_by(FloodRiskSnapshot.horizon_h))) if issued else []
+    sim = simulation_overlay.affected(db).get(aid) if is_staff(user) else None
     return {"area": AreaOut.model_validate(a), "source": a.source.name, "issued_at": issued,
-            "risk": [{"horizon_h": s.horizon_h, "risk_level": s.risk_level, "score": s.score,
-                      "flood_probability": s.flood_probability, "rainfall_mm": s.rainfall_mm,
-                      "water_level_ratio": s.water_level_ratio, "camera_flood_ratio": s.camera_flood_ratio,
-                      "explanation": explanation_for(s.explanation, user), "is_simulated": s.is_simulated}
-                     for s in snaps]}
+            "risk": [simulation_overlay.overlay_risk({
+                "horizon_h": s.horizon_h, "risk_level": s.risk_level, "score": s.score,
+                "flood_probability": s.flood_probability, "rainfall_mm": s.rainfall_mm,
+                "water_level_ratio": s.water_level_ratio, "camera_flood_ratio": s.camera_flood_ratio,
+                "explanation": explanation_for(s.explanation, user), "is_simulated": s.is_simulated}, sim)
+                for s in snaps]}
 
 
 @router.get("/traffic-cameras")
 def traffic_cameras(db: DB):
-    rows = db.execute(select(Camera.id, Camera.name, Camera.longitude, Camera.latitude).where(
-        Camera.code.like(traffic_camera_service.CODE_PREFIX + "%"), Camera.status == "ACTIVE",
-        Camera.deleted_at.is_(None))).all()
-    return {"type": "FeatureCollection", "features": [_pt(r[2], r[3], {"id": r[0], "name": r[1]}) for r in rows],
+    area, parent = aliased(AdministrativeArea), aliased(AdministrativeArea)
+    district = func.coalesce(parent.id, area.id)  # camera gắn phường thì lấy quận cha
+    rows = db.execute(select(Camera.id, Camera.name, Camera.longitude, Camera.latitude, district,
+                             func.coalesce(parent.name, area.name))
+                      .outerjoin(area, area.id == Camera.area_id).outerjoin(parent, parent.id == area.parent_id)
+                      .where(Camera.code.like(traffic_camera_service.CODE_PREFIX + "%"), Camera.status == "ACTIVE",
+                             Camera.deleted_at.is_(None)).order_by(Camera.name)).all()
+    return {"type": "FeatureCollection", "features": [
+        _pt(r[2], r[3], {"id": r[0], "name": r[1], "district_id": r[4], "district": r[5]}) for r in rows],
             "attribution": "Camera: Cổng thông tin giao thông TP.HCM"}
 
 

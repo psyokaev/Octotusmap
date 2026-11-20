@@ -2,18 +2,17 @@ import threading
 from typing import Literal
 
 from fastapi import APIRouter, Query, Request
-from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 
 from app.core.config import get_settings
 from app.core.database import SessionLocal, utcnow
 from app.core.deps import DB, Admin
 from app.core.errors import AppError, NotFound
+from app.core.spatial import point_wkt, valid_hcm_coordinate
 from app.jobs import pipeline
 from app.models import AlertRule, AuditLog, DataSource, FloodSimulation, ModelVersion, SystemSetting, TrainingRun
 from app.repositories.base import contains, paginate
-from app.core.spatial import point_wkt, valid_hcm_coordinate
-from app.schemas.common import ORM, Page, UtcDatetime
+from app.schemas.common import Page
 from app.schemas.views import (
     AuditOut,
     DataSourceOut,
@@ -22,6 +21,8 @@ from app.schemas.views import (
     RuleOut,
     SettingIn,
     SettingOut,
+    SimulationIn,
+    SimulationOut,
     UserCreate,
     UserOut,
     UserUpdate,
@@ -187,22 +188,6 @@ def train(user: Admin, request: Request, db: DB, task: Literal["forecast", "visi
 
 
 # ------------------------------------------------------------ mô phỏng ngập (chỉ admin thấy)
-class SimulationIn(BaseModel):
-    latitude: float = Field(ge=-90, le=90)
-    longitude: float = Field(ge=-180, le=180)
-    radius_m: int = Field(ge=100, le=2000)
-    depth_cm: int = Field(ge=1, le=300)
-
-
-class SimulationOut(ORM):
-    id: int
-    latitude: float
-    longitude: float
-    radius_m: int
-    depth_cm: int
-    created_at: UtcDatetime
-
-
 @router.get("/simulations", response_model=list[SimulationOut])
 def simulations(db: DB, _: Admin):
     return list(db.scalars(select(FloodSimulation).order_by(FloodSimulation.id)))

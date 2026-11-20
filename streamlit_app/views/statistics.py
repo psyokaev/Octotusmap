@@ -4,7 +4,6 @@ import streamlit as st
 from analytics import (
     C,
     EMPTY,
-    GROUP_VI,
     LEVELS,
     chart,
     data_table,
@@ -67,11 +66,13 @@ def render() -> None:
     tab = st.radio("Nhóm thống kê", ids, format_func=lambda i: next(t[1] for t in tabs if t[0] == i), horizontal=True, key="stt-tab")
     default = next(t[2] for t in tabs if t[0] == tab)
     params, group = filter_bar("stt", extended=True)
-    c1, c2, c3 = st.columns([3, 2, 2])
+    c1, c2, c3, c4 = st.columns([3, 2, 2, 2])
     ids_r = list(REPORTS)  # khoá riêng theo tab: đổi tab thì chọn lại báo cáo mặc định
     report = c1.selectbox("Loại báo cáo Excel", ids_r, index=ids_r.index(default), format_func=REPORTS.get, key=f"stt-report-{tab}")
     with c2:
         _export("/exports/excel", params, {"report": report}, "Xuất Excel", "stt-xlsx", XLSX)
+    with c4:
+        _export("/exports/pdf", params, {}, "Báo cáo PDF tổng hợp", "stt-pdf", "application/pdf")
     if tab in ("rainfall", "water"):
         with c3:
             _export("/exports/csv", params, {"kind": "rainfall" if tab == "rainfall" else "water_level"}, "Xuất CSV", "stt-csv", "text/csv")
@@ -98,6 +99,18 @@ def _obs(params: dict, group: str, tab: str) -> None:
             chart([x["bucket"] for x in s], [
                 {"name": f"Cao nhất ({unit})", "kind": "line", "y": [x["max"] for x in s], "color": RISK["HIGH"]["color"]},
                 {"name": f"Trung bình ({unit})", "kind": "line", "y": [x["avg"] for x in s], "color": C["water"]}], ytitle=unit, key="st-obs-chart")
+    if rain:
+        sat = fetch("/statistics/satellite-rainfall", params) or []
+        with section("Mưa vệ tinh GPM IMERG (NASA) so với Open-Meteo"):
+            if not sat:
+                st.caption("Chưa có mưa vệ tinh trong khoảng này (cần EARTHDATA_TOKEN; dữ liệu trễ 1–2 ngày).")
+            else:
+                chart([x["day"] for x in sat], [
+                    {"name": "IMERG – vệ tinh (mm/ngày)", "kind": "line", "y": [x["imerg_mm"] for x in sat], "color": C["ink"]},
+                    {"name": "Open-Meteo – mô hình (mm/ngày)", "kind": "line", "y": [x["model_mm"] for x in sat],
+                     "color": C["water"]}], ytitle="mm/ngày", key="st-sat-chart")
+                st.caption("Trung bình mỗi quận theo ngày UTC. IMERG là ước tính mưa từ vệ tinh (lưới 0,1°), "
+                           "nguồn đo độc lập để đối chiếu dữ liệu mô hình.")
     with section("Tổng hợp theo trạm"):
         cols = [("Mã trạm", lambda r: r["code"], None), ("Tên trạm", lambda r: r["name"], None)]
         if rain:

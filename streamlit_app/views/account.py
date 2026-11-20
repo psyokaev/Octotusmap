@@ -20,5 +20,5 @@ def render() -> None:
             except api.ApiError as e:
                 show_error(e)
                 return
-            st.session_state["token"] = r["access_token"]  # backend cấp token mới sau khi đổi
+            st.session_state["token"] = st.session_state["cookie_set"] = r["access_token"]  # token mới sau khi đổi
             st.success("Đã đổi mật khẩu.")

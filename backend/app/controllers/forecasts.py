@@ -3,12 +3,12 @@ from collections import defaultdict
 from fastapi import APIRouter, Query
 from sqlalchemy import func, select
 
-from app.core.deps import DB, OptionalUser, explanation_for
+from app.core.deps import DB, OptionalUser, explanation_for, is_staff
 from app.core.errors import NotFound
 from app.jobs import pipeline
 from app.models import AdministrativeArea, FloodRiskSnapshot, Forecast, ModelVersion, MonitoringStation
 from app.schemas.views import ModelVersionOut, RiskOut, StationForecast
-from app.services import forecast_service, gis_service
+from app.services import forecast_service, gis_service, simulation_overlay
 
 router = APIRouter(prefix="/forecasts", tags=["Forecasts"])
 
@@ -63,28 +63,32 @@ def risk(db: DB, user: OptionalUser, horizon: int = Query(0, ge=0, le=6),
     if not issued:
         return []
     names = {a.id: a.name for a in db.scalars(select(AdministrativeArea).where(AdministrativeArea.level == level))}
-    return [RiskOut(area_id=s.area_id, area_name=names[s.area_id], horizon_h=s.horizon_h, issued_at=s.issued_at,
-                    risk_level=s.risk_level, score=s.score, flood_probability=s.flood_probability,
-                    rainfall_mm=s.rainfall_mm, water_level_ratio=s.water_level_ratio,
-                    camera_flood_ratio=s.camera_flood_ratio, explanation=explanation_for(s.explanation, user),
-                    is_simulated=s.is_simulated)
-            for s in db.scalars(select(FloodRiskSnapshot).where(FloodRiskSnapshot.issued_at == issued,
-                                                                FloodRiskSnapshot.horizon_h == horizon,
-                                                                FloodRiskSnapshot.area_id.in_(list(names)))
-                                .order_by(FloodRiskSnapshot.score.desc()))]
+    aff = simulation_overlay.affected(db) if is_staff(user) else {}
+    rows = [RiskOut(**simulation_overlay.overlay_risk(dict(
+        area_id=s.area_id, area_name=names[s.area_id], horizon_h=s.horizon_h, issued_at=s.issued_at,
+        risk_level=s.risk_level, score=s.score, flood_probability=s.flood_probability, rainfall_mm=s.rainfall_mm,
+        water_level_ratio=s.water_level_ratio, camera_flood_ratio=s.camera_flood_ratio,
+        explanation=explanation_for(s.explanation, user), is_simulated=s.is_simulated), aff.get(s.area_id)))
+        for s in db.scalars(select(FloodRiskSnapshot).where(FloodRiskSnapshot.issued_at == issued,
+                                                            FloodRiskSnapshot.horizon_h == horizon,
+                                                            FloodRiskSnapshot.area_id.in_(list(names)))
+                            .order_by(FloodRiskSnapshot.score.desc()))]
+    rank = simulation_overlay.RANK
+    return sorted(rows, key=lambda r: -rank.get(r.risk_level, 0)) if aff else rows
 
 
 @router.get("/area/{aid}")
-def area_forecast(aid: int, db: DB):
+def area_forecast(aid: int, db: DB, user: OptionalUser):
     if not db.get(AdministrativeArea, aid):
         raise NotFound("Khu vực")
     issued = gis_service.latest_issue_time(db)
     snaps = list(db.scalars(select(FloodRiskSnapshot).where(FloodRiskSnapshot.area_id == aid,
                                                             FloodRiskSnapshot.issued_at == issued)
                             .order_by(FloodRiskSnapshot.horizon_h))) if issued else []
-    return {"area_id": aid, "issued_at": issued, "risk": [
+    sim = simulation_overlay.affected(db).get(aid) if is_staff(user) else None
+    return {"area_id": aid, "issued_at": issued, "risk": [simulation_overlay.overlay_risk(
         {"horizon_h": s.horizon_h, "risk_level": s.risk_level, "score": s.score,
-         "flood_probability": s.flood_probability, "rainfall_mm": s.rainfall_mm} for s in snaps],
+         "flood_probability": s.flood_probability, "rainfall_mm": s.rainfall_mm}, sim) for s in snaps],
         "stations": latest(db, aid)}
 
 

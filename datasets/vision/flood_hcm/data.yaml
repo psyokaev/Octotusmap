@@ -1,0 +1,12 @@
+# Ảnh lũ thật Kaggle (có nhãn) + ảnh camera TP.HCM lúc khô (ảnh nền, không nhãn)
+train:
+  - E:/Octotusmap/datasets/vision/flood_area_real/images/train
+  - E:/Octotusmap/datasets/vision/hcm_dry/images/train
+val:
+  - E:/Octotusmap/datasets/vision/flood_area_real/images/val
+  - E:/Octotusmap/datasets/vision/hcm_dry/images/val
+test:
+  - E:/Octotusmap/datasets/vision/flood_area_real/images/test
+  - E:/Octotusmap/datasets/vision/hcm_dry/images/test
+names:
+  0: flood_water

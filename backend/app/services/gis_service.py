@@ -60,24 +60,30 @@ def latest_issue_time(db: Session):
     return db.scalar(select(func.max(FloodRiskSnapshot.issued_at)))
 
 
-def risk_geojson(db: Session, horizon: int) -> dict:
-    """FeatureCollection khu vực + mức rủi ro của lần đánh giá mới nhất tại mốc horizon."""
+def risk_geojson(db: Session, horizon: int, simulation: bool = False) -> dict:
+    """FeatureCollection khu vực + mức rủi ro của lần đánh giá mới nhất tại mốc horizon.
+
+    simulation=True (chỉ cán bộ): phủ ngập mô phỏng đang bật lên mức rủi ro.
+    """
+    from app.services import simulation_overlay  # vòng import: overlay dùng area_at của module này
     issued = latest_issue_time(db)
     snaps = {}
     if issued:
         snaps = {s.area_id: s for s in db.scalars(select(FloodRiskSnapshot).where(
             FloodRiskSnapshot.issued_at == issued, FloodRiskSnapshot.horizon_h == horizon))}
+    aff = simulation_overlay.affected(db) if simulation else {}
     feats = []
     for aid, a in area_geometries(db).items():
         s = snaps.get(aid)
-        feats.append({"type": "Feature", "id": aid, "geometry": a["geom"], "properties": {
+        props = simulation_overlay.overlay_risk({
             "id": aid, "code": a["code"], "name": a["name"], "level": a["level"], "parent_id": a["parent_id"],
             "risk_level": s.risk_level if s else "NO_DATA", "score": s.score if s else None,
             "flood_probability": s.flood_probability if s else None,
             "cause": (s.explanation or {}).get("cause") if s else None,
             "depth_cm": (s.explanation or {}).get("depth_cm") if s else None,
             "rainfall_mm": s.rainfall_mm if s else None, "is_simulated": s.is_simulated if s else False,
-        }})
+        }, aff.get(aid))
+        feats.append({"type": "Feature", "id": aid, "geometry": a["geom"], "properties": props})
     return {"type": "FeatureCollection", "features": feats,
             "properties": {"horizon_h": horizon, "issued_at": issued.isoformat() + "Z" if issued else None}}
 

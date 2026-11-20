@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from sqlalchemy import Select, and_, case, func, literal_column, select
+from sqlalchemy import Select, and_, case, func, literal_column, or_, select
 
 from app.core.database import utcnow
 from app.models import (
@@ -20,6 +20,7 @@ from app.models import (
     RainfallObservation,
     WaterLevelObservation,
 )
+from app.services import simulation_overlay
 from app.services.station_service import connection_status
 
 VN = timedelta(hours=7)
@@ -175,14 +176,46 @@ def risk_trend(db, f: Filters, group: str = "day") -> list[dict]:
              "avg_score": _r(r[5], 3)} for r in db.execute(stmt)]
 
 
-def latest_risk_counts(db) -> dict:
+def latest_risk_counts(db, sim: dict | None = None) -> dict:
+    """Số quận theo mức rủi ro hiện tại; sim (simulation_overlay.affected) nâng mức các quận bị mô phỏng."""
     issued = db.scalar(select(func.max(FloodRiskSnapshot.issued_at)))
     if not issued:
         return {}
-    return dict(db.execute(select(FloodRiskSnapshot.risk_level, func.count()).join(
+    rows = db.execute(select(FloodRiskSnapshot.area_id, FloodRiskSnapshot.risk_level).join(
         AdministrativeArea, AdministrativeArea.id == FloodRiskSnapshot.area_id).where(
-        FloodRiskSnapshot.issued_at == issued, FloodRiskSnapshot.horizon_h == 0, AdministrativeArea.level == "DISTRICT")
-        .group_by(FloodRiskSnapshot.risk_level)).all())
+        FloodRiskSnapshot.issued_at == issued, FloodRiskSnapshot.horizon_h == 0,
+        AdministrativeArea.level == "DISTRICT"))
+    out: dict = {}
+    for aid, lv in rows:
+        lv = simulation_overlay.overlay_risk({"risk_level": lv}, (sim or {}).get(aid))["risk_level"]
+        out[lv] = out.get(lv, 0) + 1
+    return out
+
+
+def with_simulation_overview(db, o: dict, sim: dict) -> dict:
+    """Tổng quan có tính vùng ngập mô phỏng đang bật (chỉ cán bộ)."""
+    if not sim:
+        return {**o, "simulation": None}
+    risk = latest_risk_counts(db, sim)
+    n_alerts = sum(1 for a in sim.values() if a["level"] == "DISTRICT")
+    return {**o, "areas_low": risk.get("LOW", 0), "areas_medium": risk.get("MEDIUM", 0),
+            "areas_high": risk.get("HIGH", 0), "alerts_active": o["alerts_active"] + n_alerts,
+            "simulation": {"districts": n_alerts, "wards": sum(1 for a in sim.values() if a["level"] == "WARD")}}
+
+
+def with_simulation_alerts(s: dict, sims: list[dict]) -> dict:
+    """Thống kê cảnh báo cộng cảnh báo mô phỏng (theo mức, khu vực, trạng thái NEW); by_time giữ nguyên dữ liệu thật."""
+    if not sims:
+        return {**s, "simulated": 0}
+    by_level, by_status = dict(s["by_level"]), dict(s["by_status"])
+    by_area = {r["area"]: r["count"] for r in s["by_area"]}
+    for v in sims:
+        by_level[v["risk_level"]] = by_level.get(v["risk_level"], 0) + 1
+        by_status["NEW"] = by_status.get("NEW", 0) + 1
+        by_area[v["area"].name] = by_area.get(v["area"].name, 0) + 1
+    return {**s, "total": s["total"] + len(sims), "by_level": by_level, "by_status": by_status,
+            "by_area": [{"area": k, "count": c} for k, c in sorted(by_area.items(), key=lambda x: -x[1])],
+            "simulated": len(sims)}
 
 
 def forecast_rows(db, f: Filters, limit=None):
@@ -341,3 +374,28 @@ def overview(db, f: Filters) -> dict:
         "valid_data_ratio": round(q_valid / q_total, 4) if q_total else None,
         "generated_at": utcnow(),
     }
+
+
+def satellite_vs_model(db, f: Filters) -> list[dict]:
+    """Mưa trung bình mỗi quận theo ngày UTC: vệ tinh GPM IMERG (đo) và Open-Meteo (mô hình, tổng giờ trong ngày)."""
+    from app.models import SatelliteRainfallDaily as S
+
+    d0, d1 = f.date_from.date(), f.date_to.date()
+    q = select(S.day, func.avg(S.rain_mm)).where(S.day >= d0, S.day <= d1)
+    if f.area_id:
+        q = q.where(S.area_id == f.area_id)
+    sat = dict(db.execute(q.group_by(S.day)).all())
+    if not sat:
+        return []
+    day = func.date(RainfallObservation.observed_at)
+    om = select(day.label("d"), MonitoringStation.id, func.sum(RainfallObservation.rainfall_mm).label("mm")).join(
+        MonitoringStation, MonitoringStation.id == RainfallObservation.station_id).where(
+        MonitoringStation.code.like("OM-%"), MonitoringStation.code != "OM-TIDE-VT",
+        RainfallObservation.observed_at >= f.date_from, RainfallObservation.observed_at < f.date_to,
+        RainfallObservation.quality_flag != "SUSPECT")
+    if f.area_id:
+        om = om.join(AdministrativeArea, AdministrativeArea.id == MonitoringStation.area_id).where(
+            or_(AdministrativeArea.id == f.area_id, AdministrativeArea.parent_id == f.area_id))
+    om = om.group_by(day, MonitoringStation.id).subquery()
+    model = dict(db.execute(select(om.c.d, func.avg(om.c.mm)).group_by(om.c.d)).all())
+    return [{"day": d.isoformat(), "imerg_mm": _r(sat[d], 2), "model_mm": _r(model.get(d), 2)} for d in sorted(sat)]

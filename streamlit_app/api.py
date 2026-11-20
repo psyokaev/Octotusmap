@@ -8,6 +8,7 @@ import streamlit as st
 
 DEFAULT_BASE = "http://127.0.0.1:8000/api/v1"
 TIMEOUT = 20.0
+JWT_MAX_AGE_S = 480 * 60  # bằng jwt_expire_minutes của backend
 _cache: dict = {}  # shortcut: cache trong tiến trình, xoá khi có thao tác ghi; đủ cho 1 worker
 
 
@@ -17,6 +18,10 @@ class ApiError(Exception):
     def __init__(self, status: int, code: str, message: str, details=None):
         super().__init__(message)
         self.status, self.code, self.message, self.details = status, code, message, details
+
+
+def clear_cache() -> None:
+    _cache.clear()
 
 
 def base() -> str:
@@ -58,6 +63,7 @@ def _err(res: httpx.Response) -> ApiError:
         st.session_state.pop("token", None)
         st.session_state.pop("user", None)
         st.session_state["auth_notice"] = "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại."
+        st.session_state["cookie_clear"] = True
     return ApiError(res.status_code, e.get("code", "HTTP_ERROR"), e.get("message") or f"Lỗi {res.status_code}", e.get("details"))
 
 

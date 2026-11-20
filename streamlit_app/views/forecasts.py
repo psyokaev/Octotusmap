@@ -85,7 +85,9 @@ def risk_table(rows: list[dict]) -> list[dict]:
              "Mức nguy cơ": risk_text(r["risk_level"]),
              "Lý do": flood_cause((r.get("explanation") or {}).get("cause"), (r.get("explanation") or {}).get("depth_cm")) or "—",
              "Điểm": fmt_dec(r["score"]), "Xác suất ngập (ước tính)": fmt_pct(r.get("flood_probability")),
-             "Mưa (mm/h)": fmt_num(r.get("rainfall_mm"))} for i, r in enumerate(rows)]
+             "Mưa (mm/h)": fmt_num(r.get("rainfall_mm")),
+             "LSTM: ngập trong 6 giờ tới": fmt_pct((r.get("explanation") or {}).get("lstm_flood_6h"))}
+            for i, r in enumerate(rows)]
 
 
 def _model_section() -> None:
@@ -137,6 +139,8 @@ def _risk_section() -> None:
         return
     st.caption(f"Đánh giá phát hành {fmt_dt(rows[0]['issued_at'])}")
     st.dataframe(risk_table(rows), hide_index=True, width="stretch")
+    st.caption("Cột LSTM: mô hình LSTM học từ 246 trận ngập báo chí, xác suất quận có ngập trong 6 giờ tới (đã hiệu chỉnh, "
+               "ước tính). Chỉ để tham khảo, không dùng để phát cảnh báo; mức nguy cơ và cảnh báo theo hệ luật.")
 
 
 @st.fragment(run_every=60)

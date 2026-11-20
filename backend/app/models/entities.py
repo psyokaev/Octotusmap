@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import (
     JSON,
@@ -6,6 +6,7 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     Column,
+    Date,
     DateTime,
     Float,
     ForeignKey,
@@ -24,7 +25,7 @@ from app.core.spatial import Geometry
 
 __all__ = [
     "Role", "User", "user_roles", "DataSource", "AdministrativeArea", "MonitoringStation",
-    "Sensor", "RainfallObservation", "WaterLevelObservation", "HistoricalFloodEvent", "Camera",
+    "Sensor", "RainfallObservation", "SatelliteRainfallDaily", "WaterLevelObservation", "HistoricalFloodEvent", "Camera",
     "CameraFrame", "CameraDetection", "ModelVersion", "TrainingRun", "Forecast",
     "FloodRiskSnapshot", "AlertRule", "Alert", "AlertHistory", "Notification", "ExportHistory",
     "AuditLog", "SystemSetting", "FloodHotspot", "FloodReport", "FloodSimulation", "RateLimitHit",
@@ -164,6 +165,22 @@ class RainfallObservation(_ObservationMixin, Base):
     source_id: Mapped[int] = mapped_column(ForeignKey("data_sources.id"))
 
 
+class SatelliteRainfallDaily(Base):
+    """Mưa vệ tinh GPM IMERG theo ngày (giờ UTC) tại ô lưới 0,1° chứa tâm quận. Số đo vệ tinh, không phải mô hình.
+
+    Bảng riêng: không trộn vào rainfall_observations (theo giờ) để không làm sai thống kê và dữ liệu huấn luyện LSTM.
+    """
+
+    __tablename__ = "satellite_rainfall_daily"
+    __table_args__ = (UniqueConstraint("area_id", "day", "product", name="uq_satrain_area_day"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    area_id: Mapped[int] = mapped_column(ForeignKey("administrative_areas.id"), index=True)
+    day: Mapped[date] = mapped_column(Date, index=True)
+    rain_mm: Mapped[float] = mapped_column(Float)
+    product: Mapped[str] = mapped_column(String(30))  # ví dụ GPM_3IMERGDL.07 (Late run)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
 class WaterLevelObservation(_ObservationMixin, Base):
     __tablename__ = "water_level_observations"
     __table_args__ = (
@@ -209,6 +226,8 @@ class Camera(TimestampMixin, Base):
     roi: Mapped[list | None] = mapped_column(JSON)  # [[x,y] ...] tỉ lệ 0..1
     is_public: Mapped[bool] = mapped_column(Boolean, default=False)
     retention_days: Mapped[int] = mapped_column(Integer, default=30)
+    snapshot_checked_at: Mapped[datetime | None] = mapped_column(DateTime)  # camera giao thông: lần kiểm tra ảnh
+    snapshot_fail_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     source_id: Mapped[int] = mapped_column(ForeignKey("data_sources.id"))
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime, index=True)
     area: Mapped[AdministrativeArea | None] = relationship(lazy="joined")
@@ -471,7 +490,7 @@ class FloodReport(Base):
 
 
 class FloodSimulation(Base):
-    """Ngập giả định do admin tạo để diễn tập. Không phải dữ liệu thật, không vào quan trắc/cảnh báo/thống kê."""
+    """Ngập giả định do admin tạo để diễn tập. Không ghi vào bảng thật; cán bộ thấy qua services/simulation_overlay."""
 
     __tablename__ = "flood_simulations"
     __table_args__ = (Index("sx_sim_loc", "location", postgresql_using="gist"),)

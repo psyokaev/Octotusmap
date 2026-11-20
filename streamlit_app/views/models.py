@@ -5,7 +5,7 @@ import time
 import api
 import streamlit as st
 from analytics import MODEL_STATUS_VI, fetch, is_vision, metric, model_metrics, section
-from common import confirm_pending, fmt_dec, fmt_dt, fmt_num, run_action, show_error, sim_badge
+from common import confirm_pending, fmt_dec, fmt_dt, fmt_num, sim_badge
 
 RUN_STATUS_VI = {"RUNNING": "Đang chạy", "SUCCESS": "Hoàn tất", "FAILED": "Lỗi"}
 TASK_VI = {"forecast": "mô hình dự báo (LSTM/GRU)", "vision": "mô hình camera (YOLOv8-seg)", "FORECAST": "Dự báo", "VISION": "Camera"}

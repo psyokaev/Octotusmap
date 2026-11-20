@@ -151,6 +151,13 @@ def evaluate_all(db: Session, issued_at: datetime) -> dict:
         reports[rp.area_id].append(rp)
     kids = defaultdict(list)  # (quận, mốc) -> kết quả các phường con
     storm = storm_counts(stations, issued_at)
+    try:  # LSTM xác suất ngập theo quận: chỉ hiển thị, không vào RiskInputs/luật cảnh báo
+        from app.ai.forecasting import flood_district
+
+        lstm = flood_district.predict(db, issued_at)
+    except Exception:
+        logging.getLogger(__name__).warning("LSTM ngập theo quận lỗi", exc_info=True)
+        lstm = {}
     tide = {h: om.tide_ratio(om.tide_at(db, issued_at + timedelta(hours=h)), tstats) for h in range(0, 7)}
     # hai lượt đánh giá cùng issued_at (pipeline + kích hoạt tay) phải tuần tự, nếu không xoá/chèn chéo nhau -> trùng dòng
     db.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": int(issued_at.timestamp())})
@@ -245,7 +252,8 @@ def evaluate_all(db: Session, issued_at: datetime) -> dict:
                 camera_flood_ratio=inp.camera_flood_ratio,
                 explanation={**r.explanation, "rule_version": rule.version if rule else 0,
                              "cause": cause, "depth_cm": depth_cm, **wards_info,
-                             "stations": [stations[s].code for s in sids]},
+                             "stations": [stations[s].code for s in sids],
+                             **({"lstm_flood_6h": lstm[a.id]} if a.id in lstm else {})},
                 rule_id=rule.id if rule else None, is_simulated=simulated))
     db.commit()
     return {"areas": len(areas), "levels_now": {lv: counts[(0, lv)] for lv in

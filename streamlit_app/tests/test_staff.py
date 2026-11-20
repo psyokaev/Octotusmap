@@ -402,7 +402,24 @@ def test_logout_clears_whole_session(fake):
     st.session_state.clear()
     st.session_state.update({"user": ADMIN, "token": "t", "al-xlsx": ("s", "n", b"x"), "m-point": 1})
     auth.logout()
-    assert dict(st.session_state) == {}
+    assert dict(st.session_state) == {"cookie_tried": True, "cookie_clear": True}  # chỉ còn cờ xoá cookie phiên
+
+
+def test_session_restored_from_cookie_and_bad_cookie_cleared(monkeypatch):
+    jwt = "aaa.bbb.ccc"
+    for me, user_ok in ((lambda *a, **k: ADMIN, True), (lambda *a, **k: (_ for _ in ()).throw(api.ApiError(401, "U", "x")), False)):
+        st.session_state.clear()
+        monkeypatch.setattr(st, "context", type("C", (), {"cookies": {auth.COOKIE: jwt}})())
+        monkeypatch.setattr(api, "get", me)
+        auth.restore()
+        assert (st.session_state.get("user") == ADMIN) == user_ok
+        assert ("token" in st.session_state) == user_ok and st.session_state.get("cookie_clear", False) != user_ok
+    st.session_state.clear()
+    monkeypatch.setattr(st, "context", type("C", (), {"cookies": {auth.COOKIE: 'x";alert(1);"'}})())
+    auth.restore()
+    assert "token" not in st.session_state  # cookie không đúng dạng JWT bị bỏ qua (không được ghi vào JS)
+    st.session_state.update({"cookie_set": jwt})
+    assert jwt in auth.cookie_script() and auth.cookie_script() is None
 
 
 def test_login_drops_token_when_me_fails(monkeypatch):

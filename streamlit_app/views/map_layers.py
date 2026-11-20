@@ -104,15 +104,37 @@ def add_routes(m: folium.Map, routes: list[dict], selected: int) -> None:
 
 
 def add_endpoints(m: folium.Map, start: dict | None, end: dict | None) -> None:
+    """Điểm đi/đến kéo thả được (thả xong map.py nhận lại toạ độ qua tooltip "Điểm đi:"/"Điểm đến:")."""
     for p, color, name in ((start, "green", "Điểm đi"), (end, "red", "Điểm đến")):
         if p:
-            folium.Marker((p["lat"], p["lon"]), icon=folium.Icon(color=color), tooltip=f"{name}: {escape(str(p['label']))}").add_to(m)
+            folium.Marker((p["lat"], p["lon"]), icon=folium.Icon(color=color), draggable=True,
+                          tooltip=f"{name}: {escape(str(p['label']))} (kéo để đổi)").add_to(m)
+
+
+def add_alerts(m: folium.Map, fc: dict) -> None:
+    """Ký hiệu cảnh báo đang mở ở tâm quận: ◆ Cao, ▲ Trung bình (hình dạng kèm màu, không chỉ dựa vào màu)."""
+    for f in fc.get("features", []):
+        if not f.get("geometry"):  # khu vực chưa có tâm
+            continue
+        p, (lon, lat) = f["properties"], f["geometry"]["coordinates"]
+        r = RISK[risk_of(p["risk_level"])]
+        sim = " (MÔ PHỎNG)" if p.get("is_simulated") else ""
+        html = (f'<div style="font-size:22px;line-height:22px;color:{r["color"]};'
+                f'text-shadow:0 0 3px #fff,0 0 3px #fff">{r["symbol"]}</div>')
+        folium.Marker((lat, lon), icon=folium.DivIcon(html=html, icon_size=(22, 22), icon_anchor=(11, 11)),
+                      tooltip=f"Cảnh báo {r['label']}{sim}: {escape(str(p['title']))} · mã {int(p['id'])}").add_to(m)
 
 
 def route_bounds(route: dict) -> list[list[float]]:
     ys = [c[1] for c in route["geometry"]["coordinates"]]
     xs = [c[0] for c in route["geometry"]["coordinates"]]
     return [[min(ys), min(xs)], [max(ys), max(xs)]]
+
+
+def zoom_for(dlat: float, dlon: float, px: int = 600) -> int:
+    """Mức zoom Web Mercator để khung dlat x dlon (độ) vừa khoảng px điểm ảnh (gần xích đạo)."""
+    span = max(dlat, dlon, 1e-4)
+    return max(10, min(16, int(math.log2(px * 360 / (256 * span)))))
 
 
 def centroid(geometry: dict) -> tuple[float, float]:

@@ -7,8 +7,6 @@ email-validator>=2.2
 sqlalchemy>=2.0
 alembic>=1.13
 psycopg[binary]>=3.2
-# Chỉ cho scripts/migrate_mysql_to_postgres.py (đọc dữ liệu MySQL cũ); bỏ được sau khi chuyển xong
-pymysql>=1.1
 cryptography>=42
 bcrypt>=4.2
 pyjwt>=2.9

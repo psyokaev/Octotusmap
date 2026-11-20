@@ -17,7 +17,7 @@ from app.schemas.views import (
     AlertVerifyIn,
     UserOut,
 )
-from app.services import alert_service
+from app.services import alert_service, simulation_overlay
 from app.services.audit_service import audit
 
 router = APIRouter(prefix="/alerts", tags=["Alerts"])
@@ -45,11 +45,24 @@ def list_alerts(db: DB, user: OptionalUser, status: list[str] | None = Query(Non
     """Người dùng công khai chỉ thấy cảnh báo công khai đang hoạt động."""
     if not is_staff(user):  # trạng thái xử lý là nội bộ: không lọc/sắp xếp theo nó
         status, sort = None, "triggered_at" if sort == "status" else sort
+    d_from, d_to = (to_utc_naive(date_from) if date_from else None), (to_utc_naive(date_to) if date_to else None)
     rows, total = alert_service.list_alerts(
         db, public_only=not is_staff(user), status=status, level=level, area_id=area_id, q=q,
-        date_from=to_utc_naive(date_from) if date_from else None, date_to=to_utc_naive(date_to) if date_to else None,
-        page=page, size=size, sort=sort, direction=direction)
-    return Page(items=[_out(a, is_staff(user)) for a in rows], total=total, page=page, size=size)
+        date_from=d_from, date_to=d_to, page=page, size=size, sort=sort, direction=direction)
+    items = [_out(a, is_staff(user)) for a in rows]
+    if is_staff(user):  # cảnh báo mô phỏng: chỉ cán bộ, đứng đầu trang 1, mất khi tắt mô phỏng
+        sims = [AlertOut(**v) for v in _sim_alerts(db) if (not status or "NEW" in status)
+                and (not level or v["risk_level"] in level) and (not area_id or v["area"].id == area_id)
+                and (not q or q.lower() in (v["title"] + v["message"] + v["code"]).lower())
+                and simulation_overlay.in_range(v["triggered_at"], d_from, d_to)]
+        total += len(sims)
+        if page == 1:
+            items = sims + items
+    return Page(items=items, total=total, page=page, size=size)
+
+
+def _sim_alerts(db) -> list[dict]:
+    return simulation_overlay.virtual_alerts(db, simulation_overlay.affected(db))
 
 
 @router.get("/assignees", response_model=list[UserOut])
@@ -59,6 +72,11 @@ def assignees(db: DB, _: Operator):
 
 @router.get("/{aid}", response_model=AlertDetailOut)
 def detail(aid: int, db: DB, user: OptionalUser):
+    if aid < 0:  # cảnh báo mô phỏng: chỉ cán bộ, không có lịch sử xử lý
+        v = next((v for v in _sim_alerts(db) if v["id"] == aid), None) if is_staff(user) else None
+        if not v:
+            raise HTTPException(404, "Cảnh báo mô phỏng không còn (mô phỏng đã tắt)")
+        return AlertDetailOut(**AlertOut(**v).model_dump(), history=[])
     a = alert_service.get(db, aid)
     staff = is_staff(user)
     if not staff and not (a.is_public and a.status in alert_service.OPEN):

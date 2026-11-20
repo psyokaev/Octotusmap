@@ -1,4 +1,4 @@
-"""Thông báo của người dùng (popover ở thanh bên), làm mới mỗi 60 giây."""
+"""Thông báo của người dùng (popover ở thanh trên), làm mới mỗi 60 giây."""
 import api
 import streamlit as st
 from common import fmt_dt, refresh, show_error
@@ -12,7 +12,7 @@ def render(alerts_page=None) -> None:
         show_error(e)
         return
     unread = data.get("unread", 0)
-    with st.popover(f"Thông báo ({unread} chưa đọc)" if unread else "Thông báo", width="stretch"):
+    with st.popover(f"Thông báo · {unread}" if unread else "Thông báo", help=f"{unread} chưa đọc" if unread else None):
         if not data["items"]:
             st.caption("Chưa có thông báo")
             return

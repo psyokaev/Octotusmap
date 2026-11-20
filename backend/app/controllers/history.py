@@ -4,21 +4,22 @@ from typing import Literal
 from fastapi import APIRouter, Query, Request
 from sqlalchemy import or_, select
 
-from app.core.deps import DB, Operator
+from app.core.deps import DB, Operator, OptionalUser, is_staff
 from app.core.errors import AppError, NotFound
 from app.core.spatial import point_wkt, valid_hcm_coordinate
 from app.models import DataSource, HistoricalFloodEvent
 from app.repositories.base import contains, paginate
 from app.schemas.common import Page, to_utc_naive
 from app.schemas.views import FloodEventIn, FloodEventOut
-from app.services import gis_service
+from app.services import gis_service, simulation_overlay
 from app.services.audit_service import audit
 
 router = APIRouter(prefix="/history", tags=["Flood history"])
 
 
 @router.get("/events", response_model=Page[FloodEventOut])
-def events(db: DB, q: str | None = None, area_id: int | None = None, date_from: datetime | None = None,
+def events(db: DB, user: OptionalUser, q: str | None = None, area_id: int | None = None,
+           date_from: datetime | None = None,
            date_to: datetime | None = None, min_depth: float | None = None, page: int = Query(1, ge=1),
            size: int = Query(20, ge=1, le=200), sort: str = "started_at",
            direction: Literal["asc", "desc"] = "desc"):
@@ -37,7 +38,18 @@ def events(db: DB, q: str | None = None, area_id: int | None = None, date_from: 
     col = {"started_at": HistoricalFloodEvent.started_at, "max_depth_cm": HistoricalFloodEvent.max_depth_cm,
            "location_name": HistoricalFloodEvent.location_name}.get(sort, HistoricalFloodEvent.started_at)
     rows, total = paginate(db, stmt, page, size, col, direction)
-    return Page(items=rows, total=total, page=page, size=size)
+    items = [FloodEventOut.model_validate(r) for r in rows]
+    if is_staff(user):  # vùng ngập mô phỏng đang bật: chỉ cán bộ, đứng đầu trang 1
+        d_from, d_to = (to_utc_naive(date_from) if date_from else None), (to_utc_naive(date_to) if date_to else None)
+        sims = [FloodEventOut(**v) for v in simulation_overlay.virtual_events(db)
+                if (not q or q.lower() in (v["location_name"] + v["description"]).lower())
+                and (not area_id or (v["area"] and v["area"].id == area_id))
+                and (min_depth is None or v["max_depth_cm"] >= min_depth)
+                and simulation_overlay.in_range(v["started_at"], d_from, d_to)]
+        total += len(sims)
+        if page == 1:
+            items = sims + items
+    return Page(items=items, total=total, page=page, size=size)
 
 
 @router.post("/events", response_model=FloodEventOut, status_code=201)

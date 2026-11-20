@@ -1,0 +1,109 @@
+/* Font như frontend/index.html: Google Sans + Roboto từ Google Fonts (@import phải đứng đầu) */
+@import url("https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap");
+/* Bố cục và màu theo bản React cũ (frontend/src/index.css, components/Layout.tsx). */
+:root { --font: "Google Sans", Roboto, Arial, sans-serif; --ink: #0E2A3B; --water: #1C7CB5; --line: #DBE3E9; --low: #2E8B57; --med: #D99A00; --high: #C62828; }
+
+/* Thanh trên màu ink cao 56px như TopBar */
+header[data-testid="stHeader"] { background: var(--ink) !important; height: 56px; box-shadow: none; }
+header[data-testid="stHeader"] a, header[data-testid="stHeader"] span, header[data-testid="stHeader"] p { color: rgba(255,255,255,.82) !important; }
+header[data-testid="stHeader"] a:hover span, header[data-testid="stHeader"] a:hover p { color: #fff !important; }
+header[data-testid="stHeader"] a[aria-current="page"], header[data-testid="stHeader"] a[aria-selected="true"] { background: rgba(255,255,255,.15) !important; border-radius: 6px; }
+header[data-testid="stHeader"] a[aria-current="page"] span, header[data-testid="stHeader"] a[aria-current="page"] p { color: #fff !important; }
+header[data-testid="stHeader"] a[href$="/login"], header[data-testid="stHeader"] a[href$="/account"] { display: none !important; }
+[data-testid="stHeaderLogo"], [data-testid="stLogo"] { height: 30px; }
+
+/* Cụm Thông báo / tên / Đăng xuất nổi ở góc phải thanh trên */
+.st-key-topbar { position: fixed; top: 10px; right: 16px; z-index: 999991; width: auto !important; }
+.st-key-topbar button, .st-key-topbar a { background: transparent !important; color: #fff !important; border: 1px solid rgba(255,255,255,.25) !important; }
+.st-key-topbar button:hover, .st-key-topbar a:hover { background: rgba(255,255,255,.1) !important; }
+.st-key-topbar a p, .st-key-topbar button p { color: #fff !important; }
+.st-key-topbar [data-testid="stPageLink"] a { border-color: transparent !important; }
+
+/* Trang thường: khung giữa tối đa 1280px như max-w-7xl */
+.stMainBlockContainer { padding: 80px 24px 32px !important; max-width: 1280px; }
+h1 { font-size: 1.375rem !important; padding-top: 0 !important; }
+
+/* Thẻ số liệu, khung có viền: nền trắng bo 12px như .panel */
+[data-testid="stMetric"] { background: var(--st-secondary-background-color, #fff); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+[data-testid="stExpander"] details, [data-testid="stVerticalBlockBorderWrapper"] { border-radius: 12px; }
+
+/* Logo + chữ OctotusMap như TopBar */
+header :is(div, a, button):has(> img[data-testid="stHeaderLogo"]) { display: inline-flex; align-items: center; }
+header :is(div, a, button):has(> img[data-testid="stHeaderLogo"])::after {
+  content: "OctotusMap"; color: #fff; font-weight: 600; font-size: 16px; margin-left: 8px; white-space: nowrap; }
+
+/* ---- Trang bản đồ: phủ kín dưới thanh trên, panel nổi (MapPage.tsx) ---- */
+.stMainBlockContainer:has(.st-key-m-page) { padding: 56px 0 0 !important; max-width: none; }
+.stMainBlockContainer:has(.st-key-m-page) > [data-testid="stVerticalBlock"] { gap: 0; }
+.st-key-m-page { position: relative; height: calc(100vh - 56px); overflow: hidden; gap: 0; }
+.st-key-m-mapbox, .st-key-m-mapbox iframe { height: calc(100vh - 56px) !important; }
+.st-key-m-mapbox iframe { display: block; }
+.st-key-m-side, .st-key-m-chips, .st-key-m-hours { position: absolute !important; z-index: 1000; }
+.st-key-m-side {
+  top: 12px; left: 12px; width: 400px !important; max-height: calc(100vh - 56px - 24px); overflow-y: auto;
+  background: var(--st-secondary-background-color, #fff); border: 1px solid var(--line); border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(14,42,59,.15); padding: 12px 14px; }
+.st-key-m-chips { top: 12px; left: 428px; right: 64px; width: auto !important; }
+.st-key-m-chips button { background: #fff !important; box-shadow: 0 1px 4px rgba(14,42,59,.18); border: none !important; }
+.st-key-m-chips button[kind="pillsActive"], .st-key-m-chips button[aria-pressed="true"] { background: #D6EAF5 !important; color: #0E2A3B !important; }
+.st-key-m-hours {
+  bottom: 24px; left: 50%; transform: translateX(-50%); width: auto !important;
+  background: var(--st-secondary-background-color, #fff); border-radius: 12px; padding: 8px 12px;
+  box-shadow: 0 4px 16px rgba(14,42,59,.15); }
+.st-key-m-hours label { display: block; }
+@media (max-width: 900px) {
+  .st-key-m-side { top: auto; bottom: 0; left: 0; width: 100% !important; max-height: 45vh; border-radius: 12px 12px 0 0; }
+  .st-key-m-chips { left: 12px; right: 12px; }
+  .st-key-m-hours { bottom: calc(45vh + 8px); left: 12px; right: 12px; transform: none; padding: 6px 8px; }
+  .st-key-m-hours button { padding-left: 6px; padding-right: 6px; }
+}
+
+/* Nút Đăng nhập của khách: btn-primary */
+.st-key-topbar [data-testid="stPageLink"] a[href$="/login"] { background: var(--water) !important; border-color: var(--water) !important; }
+
+/* Chỉ giao diện sáng: ẩn menu ⋮ (có mục đổi sang giao diện tối) */
+[data-testid="stMainMenu"] { display: none !important; }
+
+/* ---- Panel bên trái của bản đồ (side panel MapPage.tsx) ---- */
+.st-key-m-side { color: #1B2B36; }
+.st-key-m-searchbox [data-testid="stTextInput"] label { display: none; }
+.st-key-m-searchbox input { border-radius: 10px; font-size: 15px; padding: 10px 12px; }
+/* radio chọn nhóm (panel bản đồ, Thống kê, Cấu hình, mốc dự báo): tab gạch chân như bản React */
+:is(.st-key-m-side, .st-key-stt-tab, .st-key-cfg-tab, .st-key-fc-h) [role="radiogroup"] { gap: 2px 14px; border-bottom: 1px solid var(--line); padding-bottom: 0; }
+:is(.st-key-m-side, .st-key-stt-tab, .st-key-cfg-tab, .st-key-fc-h) [data-testid="stRadioOption"] { margin: 0; padding: 6px 2px; border-bottom: 2px solid transparent; }
+:is(.st-key-m-side, .st-key-stt-tab, .st-key-cfg-tab, .st-key-fc-h) [data-testid="stRadioOption"] > div > div:not([data-testid]) { display: none; }
+:is(.st-key-m-side, .st-key-stt-tab, .st-key-cfg-tab, .st-key-fc-h) [data-testid="stRadioOption"] p { color: #5B6B77; font-weight: 500; }
+:is(.st-key-m-side, .st-key-stt-tab, .st-key-cfg-tab, .st-key-fc-h) [data-testid="stRadioOption"][data-selected="true"] { border-bottom-color: var(--water); }
+:is(.st-key-m-side, .st-key-stt-tab, .st-key-cfg-tab, .st-key-fc-h) [data-testid="stRadioOption"][data-selected="true"] p { color: var(--water); }
+/* danh sách quận: dòng kẻ, chip mức rủi ro ở bên phải */
+.st-key-m-side [data-testid="stExpander"] details { border: none !important; border-bottom: 1px solid var(--line) !important; border-radius: 0 !important; }
+.st-key-m-side [data-testid="stExpander"] summary { padding: 6px 4px; }
+.st-key-m-side [data-testid="stExpander"] summary [data-testid="stMarkdownContainer"] { width: 100%; }
+.st-key-m-side [data-testid="stExpander"] summary p { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 0; }
+.st-key-m-side [data-testid="stExpander"] + [data-testid="stExpander"], .st-key-m-side [data-testid="stElementContainer"]:has([data-testid="stExpander"]) { margin-top: -0.75rem; }
+/* chip mức rủi ro tô đặc như .chip của bản React */
+.stMarkdownBadge { border-radius: 999px !important; padding: 1px 8px !important; font-weight: 600; }
+.stMarkdownBadge[style*="46, 139, 87"] { background: #2E8B57 !important; color: #fff !important; }
+.stMarkdownBadge[style*="217, 154, 0"] { background: #D99A00 !important; color: #fff !important; }
+.stMarkdownBadge[style*="198, 40, 40"] { background: #C62828 !important; color: #fff !important; }
+/* chip lớp bản đồ đang bật có dấu ✓ */
+.st-key-m-chips button[data-selected="true"] p::before { content: "✓ "; }
+.st-key-m-chips button[data-selected="true"] { background: #D6EAF5 !important; }
+.st-key-m-chips button p { color: #0E2A3B !important; }
+.st-key-m-hours button[aria-checked="false"], .st-key-m-hours button[data-selected="false"] { background: #fff !important; color: #1B2B36 !important; }
+
+/* Font chung cho mọi phần tử (body 15px như index.css); giữ font biểu tượng của Streamlit */
+html, body, .stApp, button, input, textarea, select, [data-testid="stMarkdownContainer"], [data-testid="stWidgetLabel"],
+[data-testid="stMetricValue"], [data-testid="stMetricLabel"], [data-baseweb], h1, h2, h3, h4, p, li, label, td, th {
+  font-family: var(--font) !important; }
+[data-testid="stIconMaterial"], .material-symbols-rounded { font-family: "Material Symbols Rounded" !important; }
+[data-testid="stMetricValue"] { font-weight: 500; }
+
+/* Dải nhắc đang bật mô phỏng (cán bộ), nổi dưới thanh trên */
+.st-key-simbanner { position: fixed; top: 64px; left: 50%; transform: translateX(-50%); z-index: 999990; width: auto !important;
+  max-width: min(760px, calc(100vw - 32px)); background: #FFF4D6; border: 1px solid #D99A00; border-radius: 10px;
+  padding: 6px 14px; box-shadow: 0 2px 8px rgba(14,42,59,.15); }
+.st-key-simbanner p { margin: 0; font-size: 14px; color: #5C4100; }
+.stApp:has(.st-key-m-page) .st-key-simbanner { top: auto; bottom: 96px; }  /* bản đồ: tránh che chip lớp */
+.st-key-stt-tab [data-testid="stWidgetLabel"], .st-key-cfg-tab [data-testid="stWidgetLabel"] { display: none; }
+.st-key-jsbox { display: none !important; }  /* iframe chỉ để chạy script ghi cookie */

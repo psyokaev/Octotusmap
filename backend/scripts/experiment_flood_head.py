@@ -25,7 +25,7 @@ VN = timedelta(hours=7)
 PERIOD = (datetime(2025, 8, 31, 17), datetime(2026, 11, 9, 17))  # 2025-09-01 .. 2026-11-09 giờ VN (UTC naive)
 
 
-def load_everything(db):
+def load_everything(db, period=PERIOD):
     from sqlalchemy import select
 
     from app.ai.forecasting.train import load_frames_from_db
@@ -44,7 +44,7 @@ def load_everything(db):
     ev = {}
     for e in db.scalars(select(HistoricalFloodEvent).where(HistoricalFloodEvent.is_simulated.is_(False))):
         d = fl.district_of(e.area_id, areas)
-        if d is not None and PERIOD[0] <= e.started_at < PERIOD[1]:
+        if d is not None and period[0] <= e.started_at < period[1]:
             ev.setdefault(d, []).append(e.started_at)
     st = {s.code: s for s in db.scalars(select(MonitoringStation))}
     hot = set(db.scalars(select(FloodHotspot.area_id).distinct()))

@@ -13,7 +13,6 @@ __pycache__/
 
 # node
 node_modules/
-frontend/dist/
 playwright-report/
 test-results/
 .playwright-cli/
@@ -37,6 +36,7 @@ datasets/gis/gadm*
 
 # notebook: ảnh thô và ảnh sinh ra
 datasets/vision/flood_area_real/raw/
+datasets/vision/hcm_dry/images/
 datasets/vision/flood_area_real/images/
 datasets/vision/flood_area_real/labels/
 

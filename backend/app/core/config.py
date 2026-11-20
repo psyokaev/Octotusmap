@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     camera_scan_interval_minutes: int = 15
     camera_scan_max_per_run: int = 20
     camera_scan_radius_m: int = 500
+    earthdata_token: str = ""  # NASA Earthdata (miễn phí) để tải mưa vệ tinh GPM IMERG; trống = không lấy
+    camera_health_per_cycle: int = 8  # số camera giao thông kiểm tra ảnh mỗi chu kỳ (0 = tắt)
+    traffic_camera_base: str = "https://giaothong.hochiminhcity.gov.vn"  # đổi khi thành phố đổi địa chỉ
 
     postgres_host: str = "127.0.0.1"
     postgres_port: int = 5432

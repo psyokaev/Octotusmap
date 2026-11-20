@@ -3,8 +3,12 @@ import json
 import re
 
 import api
+import nav
 import streamlit as st
 from common import confirm_action, fmt_dt, fmt_pct, pager, refresh, run_action, show_error, sim_badge
+
+from views import map_panels as mp
+from views.map import DEFAULT_LAYERS
 
 STATUS_VI = {"ACTIVE": "Hoạt động", "INACTIVE": "Ngừng", "MAINTENANCE": "Bảo trì"}
 MAX_MB = 10
@@ -22,8 +26,59 @@ def _img(url: str, caption: str) -> None:
         st.caption(f"Không tải được ảnh: {caption}")
 
 
+TRAFFIC_PAGE = 6
+
+
 def render() -> None:
     st.title("Camera giám sát")
+    traffic, managed = st.tabs(["Camera giao thông TP.HCM", "Camera tự quản lý"])
+    with traffic:
+        _traffic()
+    with managed:
+        _managed()
+
+
+def _traffic() -> None:
+    """796 camera giao thông thật (Cổng thông tin giao thông TP.HCM); ảnh lấy trực tiếp qua backend (cache 30 s)."""
+    try:
+        fc = api.get("/gis/traffic-cameras", ttl=3600)
+    except api.ApiError as e:
+        show_error(e)
+        return
+    cams = [{**f["properties"], "lon": f["geometry"]["coordinates"][0], "lat": f["geometry"]["coordinates"][1]}
+            for f in fc["features"]]
+    c = st.columns([3, 2])
+    q = c[0].text_input("Tìm camera", key="tc-q", placeholder="Tên đường, nút giao…").strip().lower()
+    districts = sorted({x["district"] for x in cams if x.get("district")})
+    d = c[1].selectbox("Quận/huyện", districts, index=None, placeholder="Tất cả quận/huyện", key="tc-d")
+    rows = [x for x in cams if (not q or q in x["name"].lower()) and (not d or x.get("district") == d)]
+    st.caption(f"{len(rows)}/{len(cams)} camera đang hoạt động · ảnh tĩnh làm mới mỗi 30 giây, không phải video · "
+               f"{fc.get('attribution', '')}")
+    if not rows:
+        st.info("Không có camera khớp bộ lọc.")
+        return
+    page = pager("tc-page", len(rows), TRAFFIC_PAGE)
+    shown = rows[(page - 1) * TRAFFIC_PAGE: page * TRAFFIC_PAGE]
+    for i in range(0, len(shown), 3):
+        for col, cam in zip(st.columns(3), shown[i: i + 3]):
+            with col, st.container(border=True):
+                st.markdown(f"**{cam['name']}**")
+                st.caption(cam.get("district") or "Chưa gán quận")
+                mp.camera_view(cam["id"], None)
+                if st.button("Xem trên bản đồ", key=f"tc-map-{cam['id']}"):
+                    _show_on_map(cam)
+
+
+def _show_on_map(cam: dict) -> None:
+    s = st.session_state
+    s["m-layers"] = list(dict.fromkeys([*s.get("m-layers", DEFAULT_LAYERS), "cameras"]))
+    s["m-sel"], s["m-point"] = {"kind": "camera", "id": cam["id"]}, None
+    mp.go_to(cam["lat"], cam["lon"], 16)
+    mp.open_panel("Chi tiết")
+    st.switch_page(nav.build_pages()["map"])
+
+
+def _managed() -> None:
     b = st.columns([1, 1, 4])
     b[0].button("Thêm camera", type="primary", key="cam-new", on_click=lambda: st.session_state.update({"cam-form": "new"}))
     b[1].button("Phân tích ảnh", key="cam-an-open", on_click=lambda: st.session_state.update({"cam-analyze": True}))

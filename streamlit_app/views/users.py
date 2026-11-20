@@ -69,7 +69,7 @@ def _create() -> None:
         full = c[1].text_input("Họ tên", max_chars=120)
         email = c[0].text_input("Email")
         pw = c[1].text_input("Mật khẩu (tối thiểu 10 ký tự, gồm chữ và số)", type="password")
-        roles = st.multiselect("Vai trò", list(ROLE_VI), default=["USER"], format_func=ROLE_VI.get)
+        roles = st.multiselect("Vai trò", list(ROLE_VI), default=["USER"], format_func=ROLE_VI.get, placeholder="Chọn vai trò")
         ok = st.form_submit_button("Tạo người dùng", type="primary")
     st.button("Huỷ", key="usr-create-cancel", on_click=lambda: st.session_state.pop("usr-form", None))
     if not ok:
@@ -92,7 +92,7 @@ def _edit(u: dict) -> None:
         full = c[0].text_input("Họ tên", value=u.get("full_name") or "", max_chars=120)
         email = c[1].text_input("Email", value=u["email"])
         pw = st.text_input("Đặt lại mật khẩu (để trống nếu giữ nguyên)", type="password")
-        roles = st.multiselect("Vai trò", list(ROLE_VI), default=[r for r in u["role_codes"] if r in ROLE_VI], format_func=ROLE_VI.get)
+        roles = st.multiselect("Vai trò", list(ROLE_VI), default=[r for r in u["role_codes"] if r in ROLE_VI], format_func=ROLE_VI.get, placeholder="Chọn vai trò")
         active = st.checkbox("Tài khoản đang hoạt động", value=u["is_active"])
         ok = st.form_submit_button("Lưu", type="primary")
     st.button("Huỷ", key="usr-edit-cancel", on_click=lambda: st.session_state.pop("usr-form", None))

@@ -134,7 +134,7 @@ def render() -> None:
         c[4].write(fmt_num(e.get("max_depth_cm"), " cm"))
         c[5].write(CAUSE_VI.get(e["cause"], e["cause"]))
         c[6].text(e.get("description") or "—")
-        if staff and c[7].button("Xoá", key=f"hist-del-{e['id']}"):
+        if staff and e["id"] > 0 and c[7].button("Xoá", key=f"hist-del-{e['id']}"):  # id âm: dòng mô phỏng
             st.session_state["hist-del"] = e
             st.rerun()
     pager("h-page", data["total"], data["size"])

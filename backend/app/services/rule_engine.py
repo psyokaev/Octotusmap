@@ -110,18 +110,30 @@ def evaluate(inp: RiskInputs, cfg: dict, previous_level: str | None = None) -> R
         "notes": list(inp.notes),
     }
 
+    ov = cfg["overrides"]
     stale = inp.data_age_minutes is not None and inp.data_age_minutes > cfg["freshness_max_minutes"]
     if confidence < cfg["min_confidence"] or stale:
         if stale:
             expl["notes"].append(f"Dữ liệu cũ {inp.data_age_minutes:.0f} phút (> {cfg['freshness_max_minutes']})")
         else:
             expl["notes"].append("Độ tin cậy dữ liệu thấp: thiếu đầu vào quan trọng")
+        # bằng chứng trực tiếp có hạn dùng riêng (báo cáo 3 giờ, camera 90 phút): vẫn dùng khi dữ liệu mô hình cũ
+        if inp.report_confirmations:
+            expl["overrides"].append("Có báo cáo ngập đã được xác nhận")
+        if inp.camera_flood_ratio is not None and inp.camera_flood_ratio >= ov["camera_ratio_high"]:
+            expl["overrides"].append(f"Camera phát hiện {inp.camera_flood_ratio:.0%} diện tích ROI bị ngập")
+        if expl["overrides"]:
+            expl["level_reason"] = "Mức do: " + "; ".join(expl["overrides"]) + " (dữ liệu mưa/triều không đủ)"
+            return RiskResult("HIGH", round(score, 4), confidence, expl)
+        if inp.report_confirmations == 0:
+            expl["notes"].append("Có báo cáo ngập chưa xác nhận")
+            expl["level_reason"] = "Mức do: báo cáo ngập chưa xác nhận (dữ liệu mưa/triều không đủ)"
+            return RiskResult("MEDIUM", round(score, 4), confidence, expl)
         return RiskResult("INSUFFICIENT_DATA", round(score, 4), confidence, expl)
 
     th = cfg["thresholds"]
     level = "HIGH" if score >= th["high"] else "MEDIUM" if score >= th["medium"] else "LOW"
 
-    ov = cfg["overrides"]
     if inp.flood_probability is not None and inp.flood_probability >= ov["flood_probability_high"]:
         expl["overrides"].append(f"Xác suất ngập {inp.flood_probability:.0%} >= {ov['flood_probability_high']:.0%}")
     if inp.water_level_ratio is not None and inp.water_level_ratio >= ov["water_level_ratio_high"]:

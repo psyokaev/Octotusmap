@@ -28,7 +28,7 @@ def _kpis(o: dict, cam: bool) -> None:
         ("Cảnh báo đang mở", fmt_num(o["alerts_active"]), "gồm dự báo tới 6 giờ"),
         ("Cảnh báo đã xử lý", fmt_num(o["alerts_handled"]), f"trên {fmt_num(o['alerts_in_range'])} cảnh báo trong kỳ"),
         ("Mưa trung bình", fmt_num(o["rainfall_avg_mm"], " mm/h"), None), ("Mực nước cao nhất", fmt_num(o["water_level_max_cm"], " cm"), None),
-        ("Dữ liệu hợp lệ", fmt_pct(o["valid_data_ratio"]), None), ("Dự báo mới nhất", fmt_dt(o["latest_forecast_at"]), None),
+        ("Dữ liệu hợp lệ", fmt_pct(o["valid_data_ratio"]), None), ("Dự báo mới nhất", fmt_dt(o["latest_forecast_at"])[-5:] if o["latest_forecast_at"] else "—", fmt_dt(o["latest_forecast_at"])[:10] if o["latest_forecast_at"] else None),
     ]
     for row in range(0, len(items), 5):
         for col, (label, value, hint) in zip(st.columns(5), items[row: row + 5]):
@@ -80,6 +80,8 @@ def _performance(perf: dict, cam: bool) -> None:
 def render() -> None:
     st.title("Tổng quan")
     params, group = filter_bar("db")
+    from views.statistics import _export  # cùng cách tải tệp của trang Thống kê
+    _export("/exports/pdf", params, {}, "Xuất báo cáo PDF tổng hợp", "db-pdf", "application/pdf")
     p = {**params, "risk_level": None, "data_type": None}
     g = GROUP_VI[group]
     cam = camera_enabled()

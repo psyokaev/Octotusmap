@@ -1,8 +1,10 @@
 """Các panel bên phải trang Bản đồ: tình hình, chi tiết điểm, báo cáo, camera, chỉ đường, mô phỏng."""
-import api
-import auth
 import plotly.graph_objects as go
 import streamlit as st
+
+import api
+import auth
+import nav
 from common import (
     RISK,
     RISK_RANK,
@@ -15,6 +17,7 @@ from common import (
     fmt_num,
     fmt_pct,
     refresh,
+    risk_badge,
     risk_md,
     risk_of,
     risk_text,
@@ -22,7 +25,6 @@ from common import (
     show_error,
     sim_badge,
 )
-
 from views.map_layers import centroid
 
 SEARCH_TYPE = {"area": "Khu vực", "station": "Điểm đo", "camera": "Camera", "flood_point": "Điểm ngập", "address": "Địa chỉ", "coordinate": "Toạ độ"}
@@ -40,8 +42,9 @@ def open_panel(name: str) -> None:
 
 
 def go_to(lat: float, lon: float, zoom: int = 14) -> None:
-    st.session_state["m-center"], st.session_state["m-zoom"] = (lat, lon), zoom
-    st.session_state["m-skip"] = 1  # bỏ giá trị tâm cũ mà component trả về ngay sau khi di chuyển
+    """Chủ động di chuyển bản đồ ở lần chạy sau (xem map.view_prop)."""
+    st.session_state["m-prop"] = ((lat, lon), zoom)
+    st.session_state["m-goto"] = True
 
 
 def place_search(key: str, label: str, placeholder: str) -> dict | None:
@@ -95,7 +98,7 @@ def situation(risk: dict, alert_count: int, horizon: int, latest: list[dict]) ->
     for d in districts:
         ws = wards_of(d["id"])
         hot = sum(1 for w in ws if w["risk_level"] in ("MEDIUM", "HIGH"))
-        with st.expander(f"{risk_text(d['risk_level'])} · {d['name']}"):
+        with st.expander(f"{d['name']} {risk_badge(d['risk_level'])}"):
             if flood_cause(d.get("cause"), d.get("depth_cm")):
                 st.caption(flood_cause(d.get("cause"), d.get("depth_cm")))
             if hot:
@@ -234,6 +237,14 @@ def reports_panel(reports: list[dict]) -> None:
     st.caption("Để báo ngập: chọn một điểm trên bản đồ, mở “Chi tiết” rồi “Báo ngập tại đây”.")
 
 
+def alert_brief(a: dict) -> None:
+    st.subheader(a["title"])
+    st.markdown(f"{risk_md(a['risk_level'])} · phát sinh {fmt_dt(a['triggered_at'])}")
+    if st.button("Mở cảnh báo", key="pd-alert", type="primary"):
+        st.session_state["alert_open"] = a["id"]
+        st.switch_page(nav.build_pages()["alerts"])
+
+
 def hotspot_detail(h: dict) -> None:
     st.subheader(h["name"])
     if h.get("note"):
@@ -297,7 +308,8 @@ def get_route(start: dict, end: dict, horizon: int) -> dict | None:
 
 def directions_panel(start, end, result) -> None:
     st.markdown("**Chỉ đường**")
-    st.caption("Chọn điểm bằng ô tìm kiếm hoặc bấm lên bản đồ (lần 1 = điểm đi, lần 2 = điểm đến).")
+    st.caption("Chọn điểm bằng ô tìm kiếm, bấm lên bản đồ (lần 1 = điểm đi, lần 2 = điểm đến) hoặc kéo thả marker. "
+               "Nút ◎ (Vị trí của tôi) ở góc dưới phải bản đồ đặt điểm đi tại vị trí hiện tại của bạn.")
     for key, label, cur in (("m-start", "Điểm đi", start), ("m-end", "Điểm đến", end)):
         st.markdown(f"**{label}:** {cur['label'] if cur else '—'}")
         r = place_search(f"{key}-s", f"Tìm {label.lower()}", "Đường, quận, điểm ngập, toạ độ…")
@@ -361,7 +373,8 @@ def _sync_horizon() -> None:
 
 # ------------------------------------------------------------------ mô phỏng (admin)
 def simulation_panel(sims: list[dict]) -> None:
-    st.markdown("**Mô phỏng ngập** (chỉ admin thấy; chỉ ảnh hưởng tuyến của admin)")
+    st.markdown("**Mô phỏng ngập** (chỉ cán bộ thấy): tham chiếu sang Cảnh báo, Dự báo AI, Lịch sử ngập, Thống kê và "
+                "chỉ đường của cán bộ cho tới khi xoá vùng mô phỏng.")
     pt = st.session_state.get("m-sim-point")
     st.caption(f"Tâm: {pt['lat']:.5f}, {pt['lon']:.5f}" if pt else "Bấm lên bản đồ để chọn tâm vùng ngập.")
     radius = st.slider("Bán kính (m)", 100, 2000, 500, 50, key="m-sim-radius")
@@ -369,15 +382,15 @@ def simulation_panel(sims: list[dict]) -> None:
     if st.button("Tạo vùng ngập", type="primary", key="sim-create", disabled=not pt):
         body = {"latitude": pt["lat"], "longitude": pt["lon"], "radius_m": radius, "depth_cm": depth}
         if run_action(lambda: api.post("/admin/simulations", body), "Đã tạo vùng ngập mô phỏng"):
-            refresh()
+            st.rerun()  # cả trang: dải thông báo mô phỏng ở app.py cập nhật ngay
     if sims:
         st.markdown(f"**Đang mô phỏng ({len(sims)})**")
         if st.button("Xoá tất cả", key="sim-del-all"):
             if run_action(lambda: api.delete("/admin/simulations"), "Đã xoá các vùng mô phỏng"):
-                refresh()
+                st.rerun()  # cả trang: dải thông báo mô phỏng ở app.py cập nhật ngay
         for s in sims:
             c1, c2 = st.columns([3, 1])
             c1.write(f"{s['radius_m']} m, sâu {s['depth_cm']} cm")
             if c2.button("Xoá", key=f"sim-del-{s['id']}"):
                 if run_action(lambda: api.delete(f"/admin/simulations/{s['id']}"), "Đã xoá vùng mô phỏng"):
-                    refresh()
+                    st.rerun()  # cả trang: dải thông báo mô phỏng ở app.py cập nhật ngay

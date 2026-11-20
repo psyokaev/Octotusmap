@@ -89,8 +89,18 @@ def test_role_gating(fake, monkeypatch, user, expected_hidden, expected_shown):
 def test_guest_app_has_no_staff_navigation(fake):
     at = AppTest.from_file(str(__import__("conftest").APP_DIR / "app.py"), default_timeout=30).run()
     no_exception(at)
-    assert "Đăng nhập" in texts(at)  # sidebar nhắc đăng nhập
-    assert not at.sidebar.button  # khách không có nút Đăng xuất/Thông báo
+    assert "Đăng nhập" in [e.proto.label for e in at.get("page_link")]  # nút Đăng nhập ở thanh trên
+    assert "Đăng xuất" not in [b.label for b in at.button] and not at.get("popover")  # không có Đăng xuất/Thông báo
+
+
+def test_signed_in_top_bar_has_name_notifications_logout(fake):
+    at = AppTest.from_file(str(__import__("conftest").APP_DIR / "app.py"), default_timeout=30)
+    at.session_state["user"], at.session_state["token"] = OPERATOR, "test-token"
+    at.run()
+    no_exception(at)
+    assert at.button(key="logout").label == "Đăng xuất"
+    assert (OPERATOR.get("full_name") or OPERATOR["username"]) in [e.proto.label for e in at.get("page_link")]
+    assert at.get("popover")  # Thông báo
 
 
 # ---- bản đồ
@@ -147,7 +157,7 @@ def test_map_search_by_coordinate_opens_detail(fake):
     at.button(key="m-search-pick").click().run()
     no_exception(at)
     assert at.radio(key="m-panel").value == "Chi tiết"
-    assert at.session_state["m-center"] == (10.78, 106.7)
+    assert at.session_state["m-prop"] == ((10.78, 106.7), 15)
 
 
 def test_map_directions_shows_routes_and_legend(fake):
@@ -299,3 +309,92 @@ def test_client_ip_is_forwarded_to_backend(monkeypatch):
     assert api._headers()["X-Forwarded-For"] == "203.0.113.7"
     monkeypatch.setattr(api.st, "context", SimpleNamespace(ip_address=None))
     assert "X-Forwarded-For" not in api._headers()
+
+
+def test_map_view_is_not_fed_back_while_user_pans(monkeypatch):
+    from views import map as vm
+    state = {}
+    monkeypatch.setattr(vm.st, "session_state", state)
+    assert vm.view_prop({"risk": 1}, ["risk"]) == (None, None)
+    state["m-view"] = ((10.8, 106.6), 13)  # người dùng kéo bản đồ: không đẩy lại vị trí này
+    assert vm.view_prop({"risk": 1}, ["risk"]) == (None, None)
+    assert vm.view_prop({"risk": 2}, ["risk"]) == ((10.8, 106.6), 13)  # dữ liệu đổi -> map dựng lại, giữ vị trí
+    state["m-view"] = ((10.9, 106.7), 12)
+    vm.mp.go_to(10.78, 106.7, 15)
+    assert vm.view_prop({"risk": 3}, ["risk"]) == ((10.78, 106.7), 15)  # di chuyển chủ động thắng
+
+
+# ---- mô phỏng ngập tham chiếu sang các trang cán bộ
+SIM_ALERT = {**__import__("conftest").ALERT, "id": -5, "code": "SIM-Q1", "title": "[MÔ PHỎNG] [CAO] Quận 1", "cause": "SIMULATION",
+             "depth_cm": 40, "is_simulated": True, "is_public": False, "explanation": {"cause": "SIMULATION", "depth_cm": 40}}
+
+
+def test_simulation_banner_only_for_staff_when_active(fake):
+    fake.routes["/gis/simulations"] = [{"id": 1, "latitude": 10.78, "longitude": 106.7, "radius_m": 500, "depth_cm": 40,
+                                        "created_at": "2025-06-01T03:00:00Z"}]
+    at = AppTest.from_file(str(__import__("conftest").APP_DIR / "app.py"), default_timeout=30)
+    at.session_state["user"], at.session_state["token"] = OPERATOR, "t"
+    at.run()
+    assert "Đang bật mô phỏng 1 vùng ngập" in texts(at)
+    n = len(fake.calls)
+    guest = AppTest.from_file(str(__import__("conftest").APP_DIR / "app.py"), default_timeout=30).run()
+    assert "Đang bật mô phỏng" not in texts(guest)
+    assert not any(c[1] == "/gis/simulations" for c in fake.calls[n:])  # khách không gọi API mô phỏng
+
+
+def test_simulated_alert_has_no_handling_actions(fake):
+    fake.routes["/alerts/-5"] = {**SIM_ALERT, "history": []}
+    at = AppTest.from_string(__import__("conftest").PRELUDE + "import streamlit as st\nfrom views import alerts\nst.session_state['alert_open'] = -5\nalerts.render()\n", default_timeout=30)
+    at.session_state["user"], at.session_state["token"] = OPERATOR, "t"
+    at.run()
+    no_exception(at)
+    assert "Cảnh báo MÔ PHỎNG: không cần xử lý" in texts(at)
+    assert not [b for b in at.button if b.key == "al-ack"]
+    assert common.flood_cause("SIMULATION", 40) == "MÔ PHỎNG: ngập giả định do admin tạo, khoảng 40 cm"
+
+
+def test_cameras_page_lists_traffic_cameras_with_district_filter(fake):
+    fake.routes["/gis/traffic-cameras"] = {"type": "FeatureCollection", "attribution": "Camera: Cổng thông tin giao thông TP.HCM",
+                                           "features": [{"type": "Feature", "geometry": {"type": "Point", "coordinates": [106.7, 10.78]},
+                                                         "properties": {"id": i, "name": f"Đường {i}", "district_id": 1,
+                                                                        "district": "Quận 1" if i % 2 else "Quận 3"}}
+                                                        for i in range(1, 10)]}
+    fake.routes["/cameras"] = []
+    at = run_view("cameras", OPERATOR)
+    no_exception(at)
+    assert "9/9 camera đang hoạt động" in texts(at)
+    assert len([b for b in at.button if b.key and b.key.startswith("tc-map-")]) == 6  # 6 camera mỗi trang
+    at.selectbox(key="tc-d").set_value("Quận 1").run()
+    assert "5/9 camera" in texts(at)
+
+
+def test_click_on_area_polygon_still_counts_as_map_click(monkeypatch):
+    from views import map as vm
+    state = {"m-panel": "Mô phỏng"}
+    monkeypatch.setattr(vm.st, "session_state", state)
+    out = {"last_object_clicked": {"lat": 10.7, "lng": 106.7}, "last_object_clicked_tooltip": "Phường Phú Thuận · Thấp",
+           "last_clicked": {"lat": 10.71, "lng": 106.72}}
+    assert vm.handle_interaction(out)
+    assert state["m-sim-point"] == {"lat": 10.71, "lon": 106.72}
+
+
+def test_route_zoom_fits_bounds():
+    from views.map_layers import zoom_for
+    assert zoom_for(0.037, 0.038) == 14 and zoom_for(0.3, 0.3) == 11 and zoom_for(5, 5) == 10 and zoom_for(0, 0) == 16
+
+
+def test_dragging_endpoint_moves_it(monkeypatch):
+    from views import map as vm
+    state = {"m-panel": "Chỉ đường", "m-start": {"label": "A", "lat": 10.7, "lon": 106.6}}
+    monkeypatch.setattr(vm.st, "session_state", state)
+    out = {"last_object_clicked": {"lat": 10.75, "lng": 106.65}, "last_object_clicked_tooltip": "Điểm đi: A (kéo để đổi)"}
+    assert vm.handle_interaction(out)
+    assert state["m-start"]["lat"] == 10.75 and state["m-start"]["lon"] == 106.65
+
+
+def test_alert_symbol_click_selects_simulated_alert(monkeypatch):
+    from views import map as vm
+    state = {"m-panel": "Tình hình"}
+    monkeypatch.setattr(vm.st, "session_state", state)
+    out = {"last_object_clicked": {"lat": 10.7, "lng": 106.7}, "last_object_clicked_tooltip": "Cảnh báo Cao (MÔ PHỎNG): [MÔ PHỎNG] Q7 · mã -12"}
+    assert vm.handle_interaction(out) and state["m-sel"] == {"kind": "alert", "id": -12}

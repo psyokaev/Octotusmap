@@ -20,6 +20,7 @@ log = logging.getLogger("app.pipeline")
 _lock = threading.Lock()
 last_run = bus.last_cycle  # cùng dict để worker không chạy lịch vẫn thấy chu kỳ gần nhất
 _last_scan = 0.0  # monotonic; quét camera giao thông theo chu kỳ riêng
+_last_imerg = -1e9
 
 
 def run_cycle() -> dict:
@@ -54,6 +55,24 @@ def run_cycle() -> dict:
                     out["camera_scan"] = camera_service.scan_traffic_cameras(db)
                 except Exception:  # không để lỗi quét làm hỏng chu kỳ
                     log.exception("Quét camera giao thông lỗi")
+            if not s.demo_mode and s.camera_health_per_cycle > 0:
+                from app.services import traffic_camera_service
+
+                try:  # camera hỏng/đổi đường dẫn: tự ngừng, có ảnh lại thì tự bật
+                    out["camera_health"] = traffic_camera_service.check_health(db, s.camera_health_per_cycle)
+                except Exception:
+                    db.rollback()
+                    log.exception("Kiểm tra camera giao thông lỗi")
+            global _last_imerg
+            if not s.demo_mode and s.earthdata_token and time.monotonic() - _last_imerg >= 6 * 3600:
+                from app.services import imerg_service
+
+                _last_imerg = time.monotonic()  # bản ngày IMERG ra 1 lần/ngày: thử bù tối đa 4 lần/ngày
+                try:
+                    out["imerg"] = imerg_service.ingest_recent(db, utcnow().date())
+                except Exception:
+                    db.rollback()
+                    log.exception("Lấy mưa vệ tinh IMERG lỗi")
             issued = obs_repo.latest_time(db)
             if issued:
                 out["forecast"] = forecast_service.run_inference(db, issued)
